@@ -1,6 +1,5 @@
 #include "Server.h"
 #include <WS2tcpip.h>
-#include <winsock2.h>
 using namespace std;
 
 Server::Server(const string& address, int port) {
@@ -52,20 +51,57 @@ void Server::handleClient(SOCKET& s) {
 	char sendBuf[32] = "Hello world - server";
 	char recvBuf[32];
 
-	while (true) {
-		bytesRecv = recv(s, recvBuf, 32, 0);
+	u_long mode = 1;
+	ioctlsocket(s, FIONBIO, &mode);
+
+	while (!quit) {
+		while (WSAGetLastError() == WSAEWOULDBLOCK) {
+			bytesRecv = recv(s, recvBuf, 32, 0);
+			this_thread::sleep_for(chrono::milliseconds(100));
+		}
+
+		if (bytesRecv == 0) {
+			cout << "Connection closed\n";
+			break;
+		}
+		else if (bytesRecv < 0) {
+			perror("recv failed: ");
+			break;
+		}
 		cout << "Recieved " << bytesRecv << " bytes: " << recvBuf << '\n';
 
-		bytesSent = send(s, sendBuf, 32, 0);
-		cout << "Sent " << bytesRecv << " bytes: " << sendBuf << '\n';
+		// tutaj bd wywolanie metody game
+
+		while (WSAGetLastError() == WSAEWOULDBLOCK) {
+			bytesSent = send(s, recvBuf, 32, 0);
+			this_thread::sleep_for(chrono::milliseconds(100));
+		}
+
+		if (bytesSent == 0) {
+			cout << "Connection closed\n";
+			break;
+		}
+		else if (bytesSent < 0) {
+			perror("send failed: ");
+			break;
+		}
+		cout << "Sent " << bytesSent << " bytes: " << sendBuf << '\n';
 	}
+
+	closesocket(s);
+	//clientSockets.erase(find(clientSockets.begin(), clientSockets.end(), s));
+	cout << "Closing thread " << this_thread::get_id();
 }
 void Server::runListenThread() {
 	while (!quit) {
 		SOCKET newSocket = SOCKET_ERROR;
 
-		while (newSocket == SOCKET_ERROR) {
+		while (newSocket == SOCKET_ERROR && !quit) {
 			newSocket = accept(serverSocket, NULL, NULL);
+		}
+
+		if (quit) { 
+			break;
 		}
 
 		cout << "Client connected\n";
@@ -79,7 +115,7 @@ void Server::start() {
 	}
 
 	threads.push_back(thread(&Server::runListenThread, this));
-
+	cout << "Enter 'quit' to shutdown server\n";
 	while (!quit) {
 		string comm;
 		cin >> comm;
