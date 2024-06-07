@@ -1,5 +1,6 @@
 #include "Server.h"
-#include <functional>
+#include <WS2tcpip.h>
+#include <winsock2.h>
 using namespace std;
 
 Server::Server(const string& address, int port) {
@@ -25,11 +26,10 @@ bool Server::startListening(const string& address, int port) {
 	sockaddr_in service;
 	memset(&service, 0, sizeof(service));
 	service.sin_family = AF_INET;
-	service.sin_addr.s_addr = inet_addr(address.c_str());
+	InetPton(AF_INET, __TEXT("127.0.0.1"), &service.sin_addr.s_addr);
 	service.sin_port = htons(port);
 
-	bind(serverSocket, (SOCKADDR*)&service, sizeof(service));
-	if (err == SOCKET_ERROR) {
+	if (bind(serverSocket, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR) {
 		perror("Error while binding: ");
 		closesocket(serverSocket);
 		WSACleanup();
@@ -70,7 +70,7 @@ void Server::runListenThread() {
 
 		cout << "Client connected\n";
 		clientSockets.push_back(newSocket);
-		threads.push_back(thread(&Server::handleClient, this, ref(clientSockets.end() - 1)));
+		threads.push_back(thread(&Server::handleClient, this, ref(*(clientSockets.end() - 1))));
 	}
 }
 void Server::start() {

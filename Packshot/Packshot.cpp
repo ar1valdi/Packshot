@@ -1,6 +1,5 @@
 ﻿#include <iostream>
 #include "Server.h"
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 void foo(int i) {
 	cout << i;
