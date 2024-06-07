@@ -11,13 +11,13 @@ bool Server::startListening(const string& address, int port) {
 
 	int err = WSAStartup((2, 2), &wsadata);
 	if (err != NO_ERROR) {
-		perror("WSA init error: ");
+		cout << "WSA init error: " << WSAGetLastError();
 		return false;
 	}
 
 	serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (serverSocket == INVALID_SOCKET) {
-		perror("Error creating server socket: ");
+		cout << "Error creating client socket: " << WSAGetLastError();
 		WSACleanup();
 		return false;
 	}
@@ -29,7 +29,7 @@ bool Server::startListening(const string& address, int port) {
 	service.sin_port = htons(port);
 
 	if (bind(serverSocket, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR) {
-		perror("Error while binding: ");
+		cout << "Error while binding: " << WSAGetLastError();
 		closesocket(serverSocket);
 		WSACleanup();
 		return false;
@@ -37,7 +37,7 @@ bool Server::startListening(const string& address, int port) {
 
 	err = listen(serverSocket, 1);
 	if (err == SOCKET_ERROR) {
-		perror("Error while starting listening: ");
+		cout << "Failed to start listening: " << WSAGetLastError();
 		closesocket(serverSocket);
 		WSACleanup();
 		return false;
@@ -55,9 +55,11 @@ void Server::handleClient(SOCKET& s) {
 	ioctlsocket(s, FIONBIO, &mode);
 
 	while (!quit) {
-		while (WSAGetLastError() == WSAEWOULDBLOCK) {
+		int err = WSAEWOULDBLOCK;
+		while (err == WSAEWOULDBLOCK) {
 			bytesRecv = recv(s, recvBuf, 32, 0);
 			this_thread::sleep_for(chrono::milliseconds(100));
+			err = WSAGetLastError();
 		}
 
 		if (bytesRecv == 0) {
@@ -65,16 +67,18 @@ void Server::handleClient(SOCKET& s) {
 			break;
 		}
 		else if (bytesRecv < 0) {
-			perror("recv failed: ");
+			cout << "recv failed: " << err << '\n';
 			break;
 		}
 		cout << "Recieved " << bytesRecv << " bytes: " << recvBuf << '\n';
 
 		// tutaj bd wywolanie metody game
 
-		while (WSAGetLastError() == WSAEWOULDBLOCK) {
+		err = WSAEWOULDBLOCK;
+		while (err == WSAEWOULDBLOCK) {
 			bytesSent = send(s, recvBuf, 32, 0);
 			this_thread::sleep_for(chrono::milliseconds(100));
+			err = WSAGetLastError();
 		}
 
 		if (bytesSent == 0) {
@@ -121,17 +125,11 @@ void Server::start() {
 		cin >> comm;
 		if (comm == "quit") {
 			quit = true;
-
-			cout << "Closing sockets\n";
-			closesocket(serverSocket);
-			for (SOCKET& s : clientSockets) {
-				closesocket(s);
-			}
-			cout << "Closed sockets\n";
 		}
 
 	}
 
+	closesocket(serverSocket);
 	cout << "Waiting for threads to close themselves\n";
 	for (auto& t : threads) {
 		t.join();
@@ -139,5 +137,6 @@ void Server::start() {
 	cout << "Threads closed\n";
 	threads.clear();
 	clientSockets.clear();
+	WSACleanup();
 	cout << "Server closed\n";
 }

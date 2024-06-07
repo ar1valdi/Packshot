@@ -1,6 +1,10 @@
 ﻿#include <iostream>
+#include "Connection.h"
 
 int main()
 {
-    std::cout << "Hello World!\n";
+	Connection c;
+	c.connectToServer();
+	c.sendToServer("Hello World - client");
+	Sleep(10000);
 }
