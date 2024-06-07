@@ -1,5 +1,5 @@
 #include "Server.h"
-#include <functional>
+#include <WS2tcpip.h>
 using namespace std;
 
 Server::Server(const string& address, int port) {
@@ -25,11 +25,10 @@ bool Server::startListening(const string& address, int port) {
 	sockaddr_in service;
 	memset(&service, 0, sizeof(service));
 	service.sin_family = AF_INET;
-	service.sin_addr.s_addr = inet_addr(address.c_str());
+	InetPton(AF_INET, __TEXT("127.0.0.1"), &service.sin_addr.s_addr);
 	service.sin_port = htons(port);
 
-	bind(serverSocket, (SOCKADDR*)&service, sizeof(service));
-	if (err == SOCKET_ERROR) {
+	if (bind(serverSocket, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR) {
 		perror("Error while binding: ");
 		closesocket(serverSocket);
 		WSACleanup();
@@ -52,25 +51,62 @@ void Server::handleClient(SOCKET& s) {
 	char sendBuf[32] = "Hello world - server";
 	char recvBuf[32];
 
-	while (true) {
-		bytesRecv = recv(s, recvBuf, 32, 0);
+	u_long mode = 1;
+	ioctlsocket(s, FIONBIO, &mode);
+
+	while (!quit) {
+		while (WSAGetLastError() == WSAEWOULDBLOCK) {
+			bytesRecv = recv(s, recvBuf, 32, 0);
+			this_thread::sleep_for(chrono::milliseconds(100));
+		}
+
+		if (bytesRecv == 0) {
+			cout << "Connection closed\n";
+			break;
+		}
+		else if (bytesRecv < 0) {
+			perror("recv failed: ");
+			break;
+		}
 		cout << "Recieved " << bytesRecv << " bytes: " << recvBuf << '\n';
 
-		bytesSent = send(s, sendBuf, 32, 0);
-		cout << "Sent " << bytesRecv << " bytes: " << sendBuf << '\n';
+		// tutaj bd wywolanie metody game
+
+		while (WSAGetLastError() == WSAEWOULDBLOCK) {
+			bytesSent = send(s, recvBuf, 32, 0);
+			this_thread::sleep_for(chrono::milliseconds(100));
+		}
+
+		if (bytesSent == 0) {
+			cout << "Connection closed\n";
+			break;
+		}
+		else if (bytesSent < 0) {
+			perror("send failed: ");
+			break;
+		}
+		cout << "Sent " << bytesSent << " bytes: " << sendBuf << '\n';
 	}
+
+	closesocket(s);
+	//clientSockets.erase(find(clientSockets.begin(), clientSockets.end(), s));
+	cout << "Closing thread " << this_thread::get_id();
 }
 void Server::runListenThread() {
 	while (!quit) {
 		SOCKET newSocket = SOCKET_ERROR;
 
-		while (newSocket == SOCKET_ERROR) {
+		while (newSocket == SOCKET_ERROR && !quit) {
 			newSocket = accept(serverSocket, NULL, NULL);
+		}
+
+		if (quit) { 
+			break;
 		}
 
 		cout << "Client connected\n";
 		clientSockets.push_back(newSocket);
-		threads.push_back(thread(&Server::handleClient, this, ref(clientSockets.end() - 1)));
+		threads.push_back(thread(&Server::handleClient, this, ref(*(clientSockets.end() - 1))));
 	}
 }
 void Server::start() {
@@ -79,7 +115,7 @@ void Server::start() {
 	}
 
 	threads.push_back(thread(&Server::runListenThread, this));
-
+	cout << "Enter 'quit' to shutdown server\n";
 	while (!quit) {
 		string comm;
 		cin >> comm;
