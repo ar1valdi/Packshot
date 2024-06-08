@@ -5,8 +5,8 @@
 class Game
 {
 	GameState gs;
-	Game();
 public:
+	Game();
 	GameState handleIngameRequest(Action a);
 	string getSerializedGameState();
 };

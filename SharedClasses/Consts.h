@@ -1,8 +1,11 @@
 // BOTH
 #define FETCH_MSG "FETCH"
+#define IP_ADDRESS "127.0.0.1"
+#define PORT 12345
 
 // SERVER
 #define SERVER_RECV_BUF 1024
+#define MAX_CLIENTS_NUM 4
 
 // CLIENT
 #define CLIENT_RECV_BUF 1024

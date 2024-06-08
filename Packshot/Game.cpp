@@ -1,7 +1,8 @@
 #include "Game.h"
 
+Game::Game() {}
 string Game::getSerializedGameState() {
-	return gs.serialize(1);
+	return gs.serialize();
 }
 GameState Game::handleIngameRequest(Action a) {
 	GameState gs;

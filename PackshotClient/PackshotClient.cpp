@@ -24,8 +24,8 @@ void testy_janek() {
 	gs = c.sendToServer(a.serialize());
 	cout << gs.timer << "\n";
 
-	//gs = c.fetch();
-	//cout << gs.timer << "\n";
+	gs = c.fetch();
+	cout << gs.timer << "\n";
 
 	Sleep(100000);
 }
