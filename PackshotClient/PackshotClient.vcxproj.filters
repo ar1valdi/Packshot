@@ -24,10 +24,14 @@
     <ClCompile Include="..\SharedClasses\GameState.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
+<<<<<<< HEAD
+    <ClCompile Include="Client.cpp">
+=======
     <ClCompile Include="..\SharedClasses\Player.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
     <ClCompile Include="..\SharedClasses\Flag.cpp">
+>>>>>>> origin/master
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
   </ItemGroup>
@@ -50,5 +54,11 @@
     <ClInclude Include="..\SharedClasses\Consts.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
+    <ClInclude Include="Client.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="map.txt" />
   </ItemGroup>
 </Project>

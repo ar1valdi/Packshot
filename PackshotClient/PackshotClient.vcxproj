@@ -136,6 +136,7 @@
   <ItemGroup>
     <ClCompile Include="..\SharedClasses\Flag.cpp" />
     <ClCompile Include="..\SharedClasses\GameState.cpp" />
+    <ClCompile Include="Client.cpp" />
     <ClCompile Include="..\SharedClasses\Player.cpp" />
     <ClCompile Include="Connection.cpp" />
     <ClCompile Include="PackshotClient.cpp" />
@@ -146,7 +147,11 @@
     <ClInclude Include="..\SharedClasses\GameState.h" />
     <ClInclude Include="..\SharedClasses\Player.h" />
     <ClInclude Include="..\SharedClasses\Position.h" />
+    <ClInclude Include="Client.h" />
     <ClInclude Include="Connection.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="map.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
