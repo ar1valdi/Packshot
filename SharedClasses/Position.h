@@ -13,6 +13,15 @@ struct Position {
 		this->x = x;
 		this->y = y;
 	}
+
+	bool operator==(const Position& other) const {
+		return (x == other.x && y == other.y);
+	}
+
+	bool operator!=(const Position& other) const {
+		return (x != other.x || y != other.y);
+	}
+
 	string serialize() {
 		stringstream ss;
 		ss << x << " " << y;

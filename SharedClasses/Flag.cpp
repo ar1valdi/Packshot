@@ -2,14 +2,14 @@
 #include <sstream>
 
 Flag::Flag() {
-	flagPos = Position();
+	position = Position();
 	captureTime = 0;
 	capturingTimer = 0;
 	ownerID = -1;
 }
 string Flag::serialize() {
 	stringstream ss;
-	ss << flagPos.serialize() << " ";
+	ss << position.serialize() << " ";
 	ss << captureTime << " ";
 	ss << capturingTimer << " ";
 	ss << ownerID;

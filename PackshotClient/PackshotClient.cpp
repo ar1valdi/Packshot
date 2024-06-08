@@ -6,6 +6,11 @@
 #include "Consts.h"
 #include "Client.h"
 
+void testy_janek() {
+
+	Sleep(100000);
+}
+
 int main()
 {
     Client client;
