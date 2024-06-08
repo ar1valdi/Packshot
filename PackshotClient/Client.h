@@ -13,6 +13,7 @@ private:
 	GameState gamestate;
 	std::vector<int> scores;
 	bool running;
+	int direction;
 
 	void mainLoop();
 	void handleInputAsync();

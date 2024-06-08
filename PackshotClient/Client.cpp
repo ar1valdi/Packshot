@@ -12,20 +12,23 @@ using namespace std;
 mutex mapChange;
 
 char Client::getPressedKey() {
-    if (GetAsyncKeyState(UP) & 0x8000) {
+    if (GetAsyncKeyState('W') | GetAsyncKeyState(VK_UP) & 0x8000) {
         return UP;
     }
-    if (GetAsyncKeyState(LEFT) & 0x8000) {
+    if (GetAsyncKeyState('A') | GetAsyncKeyState(VK_LEFT) & 0x8000) {
         return LEFT;
     }
-    if (GetAsyncKeyState(DOWN) & 0x8000) {
+    if (GetAsyncKeyState('S') | GetAsyncKeyState(VK_DOWN) & 0x8000) {
         return DOWN;
     }
-    if (GetAsyncKeyState(RIGHT) & 0x8000) {
+    if (GetAsyncKeyState('D') | GetAsyncKeyState(VK_RIGHT) & 0x8000) {
         return RIGHT;
     }
     if (GetAsyncKeyState(ESCAPE) & 0x8000) {
         return ESCAPE;
+    }
+    if (GetAsyncKeyState(VK_SPACE) & 0x8000) {
+        return ATTACK_MOVE;
     }
     return NO_INPUT;
 }
@@ -62,6 +65,7 @@ vector<vector<char>> Client::loadMap(const string filename) {
 
 Client::Client() {
     running = true;
+    direction = RIGHT;
 
     map = loadMap("map.txt");
 
@@ -164,15 +168,22 @@ void Client::performPreAction(char input) {
 
     if (input == UP) {
         dy = -1;
+        direction = UP;
     }
     if (input == DOWN) {
         dy = 1;
+        direction = DOWN;
     }
     if (input == RIGHT) {
         dx = 1;
+        direction = RIGHT;
     }
     if (input == LEFT) {
         dx = -1;
+        direction = LEFT;
+    }
+    if (input == ATTACK_MOVE) {
+
     }
 
     map[y + dy][x + dx] = '@';
@@ -193,6 +204,8 @@ ActionCode Client::inputToActionCode(char input) {
     case LEFT:
         return ActionCode(MOVE_LEFT);
         break;
+    case ATTACK_MOVE:
+        return ActionCode(ATTACK);
     }
     return ActionCode(PRESENT);
 }
@@ -205,7 +218,6 @@ void Client::sendToServer(char input) {
     GameState newGameState = connection.sendToServer(serializedAction);
 
     unique_lock<mutex> lock(mapChange);
-    lock.lock();
     update(newGameState);
     lock.unlock();
 }
@@ -216,7 +228,19 @@ void Client::fetch() {
 
 // TODO
 void Client::update(GameState& newGameState) {
-    
+    for (auto player : gamestate.players) {
+        int x = player.getPosition().x;
+        int y = player.getPosition().y;
+
+        map[y][x] = ' ';
+    }
+
+    for (auto player : newGameState.players) {
+        int x = player.getPosition().x;
+        int y = player.getPosition().y;
+
+        map[y][x] = '@';
+    }
 }
 
 void Client::clearScreen() {
