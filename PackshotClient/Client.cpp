@@ -40,7 +40,11 @@ void Client::start() {
 
 void Client::connect() {
     running = connection.connectToServer();
-    gamestate = connection.sendToServer("Hello World - client");
+
+    Action a;
+    a.actionCode = NEW_PLAYER;
+    gamestate = connection.sendToServer(a.serialize());
+
     Sleep(100);
 }
 
@@ -68,12 +72,10 @@ Client::Client() {
     direction = RIGHT;
 
     map = loadMap("map.txt");
-
-    myPlayer->position = {1, 1};
-    map[myPlayer->position.x][myPlayer->position.y] = '@';
 }
 
 void Client::mainLoop() {
+    cout << "fetching\n";
     fetch();
     draw();
 
@@ -83,7 +85,7 @@ void Client::mainLoop() {
     while (running) {
         fetch();
         lock.lock();
-        //draw();
+        draw();
         lock.unlock();
         Sleep(10);
     }
@@ -239,8 +241,8 @@ void Client::fetch() {
 void Client::update(GameState& newGameState) {
     unique_lock<mutex> lock(mapChange);
     for (auto player : gamestate.players) {
-        int x = player.getPosition().x;
-        int y = player.getPosition().y;
+        int x = player.position.x;
+        int y = player.position.y;
 
         if (player.isAlive) {
             map[y][x] = ' ';
@@ -248,8 +250,8 @@ void Client::update(GameState& newGameState) {
     }
 
     for (auto player : newGameState.players) {
-        int x = player.getPosition().x;
-        int y = player.getPosition().y;
+        int x = player.position.x;
+        int y = player.position.y;
 
         if (player.isAlive) {
             map[y][x] = '@';
@@ -276,6 +278,12 @@ int Client::symbolToColor(char symbol) {
         return BACKGROUND_RED;
     }
     return 6;
+}
+
+void Client::gotoxy(int x, int y) {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD coord = { x, y };
+    SetConsoleCursorPosition(hConsole, coord);
 }
 
 // TODO

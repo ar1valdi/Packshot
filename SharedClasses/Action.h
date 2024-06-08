@@ -11,7 +11,8 @@ enum ActionCode {
 	ATTACK,
 	READY_IN_LOBBY,
 	NOT_READY_IN_LOBBY,
-	PRESENT
+	PRESENT,
+    NEW_PLAYER
 };
 
 class Action {

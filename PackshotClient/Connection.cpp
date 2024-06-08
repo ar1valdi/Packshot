@@ -57,7 +57,7 @@ GameState Connection::sendToServer(const string& req) {
 		throw new exception("send failed: " + WSAGetLastError());
 	}
 
-	cout << "Bytes sent: " << bytesSent << '\n';
+	//cout << "Bytes sent: " << bytesSent << '\n';
 	while (bytesRecv == SOCKET_ERROR) {
 		int err = WSAEWOULDBLOCK;
 		while (err == WSAEWOULDBLOCK) {
@@ -76,7 +76,7 @@ GameState Connection::sendToServer(const string& req) {
 			WSACleanup();
 			throw new exception("recv failed: " + err);
 		}
-		cout << "Recieved " << bytesRecv << " bytes: " << recvBuf << '\n';
+		//cout << "Recieved " << bytesRecv << " bytes: " << recvBuf << '\n';
 
 	}
 

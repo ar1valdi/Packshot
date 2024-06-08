@@ -37,4 +37,5 @@ public:
 	static char getPressedKey();
 	static int symbolToColor(char symbol);
 	static ActionCode inputToActionCode(char input);
+	static void gotoxy(int x, int y);
 };
