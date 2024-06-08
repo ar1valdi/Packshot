@@ -3,8 +3,8 @@
 
 int main()
 {
-	Connection c;
+	/*Connection c;
 	c.connectToServer();
 	c.sendToServer("Hello World - client");
-	Sleep(10000);
+	Sleep(10000);*/
 }
