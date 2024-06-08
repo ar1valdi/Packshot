@@ -11,8 +11,8 @@ private:
 public:
 	Connection(); 
 	bool connectToServer();
-	bool connectToServer(string address, int port);
-	bool sendToServer(string req);
+	bool connectToServer(const string& address, int port);
+	GameState sendToServer(const string& req);
 	GameState fetch();
 	~Connection();
 };
