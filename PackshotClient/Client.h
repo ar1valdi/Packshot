@@ -2,6 +2,7 @@
 #include "Player.h"
 #include "GameState.h"
 #include "Connection.h"
+#include "Action.h"
 #include <vector>
 
 class Client {
@@ -15,13 +16,15 @@ private:
 
 	void mainLoop();
 	void handleInputAsync();
-	void validateInput();
-	void performPreAction();
-	void sendToServer();
+	void makeAction(char input, char lastInput);
+	bool validateInput(char input);
+	void performPreAction(char input);
+	void sendToServer(char input);
 	void fetch();
-	void update();
+	void update(GameState& newGameState);
 	void draw();
 	void connect();
+	vector<vector<char>> loadMap(const string filename);
 
 public:
 	Client();
@@ -31,4 +34,6 @@ public:
 
 	static void clearScreen();
 	static char getPressedKey();
+	static int symbolToColor(char symbol);
+	static ActionCode inputToActionCode(char input);
 };
