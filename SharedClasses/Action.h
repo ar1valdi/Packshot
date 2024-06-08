@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <sstream>
 using namespace std;
 
 enum ActionCode {
@@ -16,8 +17,17 @@ enum ActionCode {
 class Action {
 public:
 	ActionCode actionCode;
-	string serialize() {
-		return "";
-	};
-	static Action deserialize(const string& ser) { return Action(); };
+    inline string serialize() {
+        stringstream ss;
+        ss << actionCode;
+        return ss.str();
+    }
+    inline static Action deserialize(const string& ser) {
+        Action action;
+        stringstream ss(ser);
+        int code;
+        ss >> code;
+        action.actionCode = static_cast<ActionCode>(code);
+        return action;
+    }
 };

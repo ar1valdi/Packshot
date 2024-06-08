@@ -71,7 +71,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ExecutablePath>$(VC_ExecutablePath_x64);$(CommonExecutablePath);..SharedClasses</ExecutablePath>
+    <ExecutablePath>$(VC_ExecutablePath_x64);$(CommonExecutablePath);../SharedClasses</ExecutablePath>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../SharedClasses</IncludePath>
     <ExternalIncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../SharedClasses</ExternalIncludePath>
     <SourcePath>$(VC_SourcePath);../SharedClasses</SourcePath>
@@ -134,7 +134,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\SharedClasses\Flag.cpp" />
     <ClCompile Include="..\SharedClasses\GameState.cpp" />
+    <ClCompile Include="..\SharedClasses\Player.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Packshot.cpp" />
     <ClCompile Include="Server.cpp" />

@@ -6,13 +6,15 @@ using namespace std;
 
 class GameState
 {
+public:
 	vector<Flag> flags;
 	vector<Player> players;
 	double timer;
 	vector<int> score;
 	bool isGameOver;
-public:
-	string serialize() { return ""; };
-	static GameState deserialize(const string& ser) { return GameState(); };
+
+	GameState();
+	string serialize(int a);
+	static GameState deserialize(const string& ser);
 };
 
