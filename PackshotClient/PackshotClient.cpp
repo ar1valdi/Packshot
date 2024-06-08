@@ -1,10 +1,16 @@
 ﻿#include <iostream>
 #include "Connection.h"
+#include "Player.h"
+#include <windows.h>
+#include <conio.h>
+#include "Consts.h"
+#include "Client.h"
 
 int main()
 {
-	/*Connection c;
-	c.connectToServer();
-	c.sendToServer("Hello World - client");
-	Sleep(10000);*/
+    Client client;
+    client.start();
 }
+
+
+

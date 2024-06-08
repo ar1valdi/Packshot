@@ -135,6 +135,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\SharedClasses\GameState.cpp" />
+    <ClCompile Include="Client.cpp" />
     <ClCompile Include="Connection.cpp" />
     <ClCompile Include="PackshotClient.cpp" />
   </ItemGroup>
@@ -144,6 +145,7 @@
     <ClInclude Include="..\SharedClasses\GameState.h" />
     <ClInclude Include="..\SharedClasses\Player.h" />
     <ClInclude Include="..\SharedClasses\Position.h" />
+    <ClInclude Include="Client.h" />
     <ClInclude Include="Connection.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
