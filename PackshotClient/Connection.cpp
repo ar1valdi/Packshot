@@ -48,10 +48,12 @@ bool Connection::connectToServer(string address, int port) {
 bool Connection::sendToServer(string req) {
 	int bytesSent = send(s, req.c_str(), req.length() + 1, 0);
 	int bytesRecv = SOCKET_ERROR;
-	char recvBuf[32];
+	char recvBuf[512];
 
 	if (bytesSent <= 0) {
-		return false;
+		closesocket(s);
+		WSACleanup();
+		throw new exception("send failed: " + WSAGetLastError());
 	}
 
 	cout << "Bytes sent: " << bytesSent << '\n';
@@ -64,12 +66,14 @@ bool Connection::sendToServer(string req) {
 		}
 
 		if (bytesRecv == 0) {
-			cout << "Connection closed\n";
-			break;
+			closesocket(s);
+			WSACleanup();
+			throw new exception("connection closed");
 		}
 		else if (bytesRecv < 0) {
-			cout << "recv failed: " << err << '\n';
-			break;
+			closesocket(s);
+			WSACleanup();
+			throw new exception("recv failed: " + err);
 		}
 		cout << "Recieved " << bytesRecv << " bytes: " << recvBuf << '\n';
 

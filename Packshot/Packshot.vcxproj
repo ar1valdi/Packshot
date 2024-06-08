@@ -128,6 +128,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\SharedClasses\Flag.cpp" />
+    <ClCompile Include="..\SharedClasses\GameState.cpp" />
+    <ClCompile Include="..\SharedClasses\Player.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Packshot.cpp" />
     <ClCompile Include="Server.cpp" />
