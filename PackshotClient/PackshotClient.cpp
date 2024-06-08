@@ -6,12 +6,7 @@
 #include "Consts.h"
 #include "Client.h"
 
-	a.actionCode = ActionCode::MOVE_LEFT;
-	gs = c.sendToServer(a.serialize());
-	cout << gs.timer << "\n";
-
-	gs = c.fetch();
-	cout << gs.timer << "\n";
+void testy_janek() {
 
 	Sleep(100000);
 }
