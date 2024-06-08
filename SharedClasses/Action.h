@@ -7,12 +7,17 @@ enum ActionCode {
 	MOVE_RIGHT,
 	MOVE_UP,
 	MOVE_DOWN,
-	ATTACK
+	ATTACK,
+	READY_IN_LOBBY,
+	NOT_READY_IN_LOBBY,
+	PRESENT
 };
 
 class Action {
 public:
 	ActionCode actionCode;
-	string serialize();
-	static Action deserialize(string ser);
+	string serialize() {
+		return "";
+	};
+	static Action deserialize(const string& ser) { return Action(); };
 };

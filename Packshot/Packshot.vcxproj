@@ -141,6 +141,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\SharedClasses\Action.h" />
+    <ClInclude Include="..\SharedClasses\Consts.h" />
     <ClInclude Include="..\SharedClasses\Flag.h" />
     <ClInclude Include="..\SharedClasses\GameState.h" />
     <ClInclude Include="..\SharedClasses\Player.h" />

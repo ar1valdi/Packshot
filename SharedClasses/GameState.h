@@ -12,6 +12,7 @@ class GameState
 	vector<int> score;
 	bool isGameOver;
 public:
-	string serialize();
+	string serialize() { return ""; };
+	static GameState deserialize(const string& ser) { return GameState(); };
 };
 

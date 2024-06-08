@@ -10,7 +10,7 @@ Connection::Connection() {
 bool Connection::connectToServer() {
 	return connectToServer("127.0.0.1", 12345);
 }
-bool Connection::connectToServer(string address, int port) {
+bool Connection::connectToServer(const string& address, int port) {
 	WSADATA wsadata;
 
 	int err = WSAStartup((2, 2), &wsadata);
@@ -45,13 +45,13 @@ bool Connection::connectToServer(string address, int port) {
 
 	return true;
 }
-bool Connection::sendToServer(string req) {
+GameState Connection::sendToServer(const string& req) {
 	int bytesSent = send(s, req.c_str(), req.length() + 1, 0);
 	int bytesRecv = SOCKET_ERROR;
 	char recvBuf[32];
 
 	if (bytesSent <= 0) {
-		return false;
+		throw new exception("send failed: " + WSAGetLastError());
 	}
 
 	cout << "Bytes sent: " << bytesSent << '\n';
@@ -75,7 +75,7 @@ bool Connection::sendToServer(string req) {
 
 	}
 
-	return true;
+	return GameState::deserialize(recvBuf);
 }
 Connection::~Connection() {
 	closesocket(s);
