@@ -29,6 +29,6 @@ private:
 	void handleFlags(Player player);
 	void handleAttack(Player player);
 
-	void updateClient();
+	void update();
 };
 

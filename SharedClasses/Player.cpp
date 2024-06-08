@@ -2,6 +2,15 @@
 
 #include <sstream>
 using namespace std;
+
+Player::Player()
+{
+}
+
+Player::~Player()
+{
+}
+
 string Player::serialize() {
 	stringstream ss;
 	ss << id << " " << name << " " << score << " " << deathTimer << " " 
