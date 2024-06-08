@@ -5,7 +5,7 @@ GameState::GameState() {
     this->isGameOver = false;
 }
 
-string GameState::serialize(int a) {
+string GameState::serialize() {
     stringstream ss;
 
     ss << flags.size() << " ";

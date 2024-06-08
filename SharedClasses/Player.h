@@ -3,17 +3,6 @@
 #include "Position.h"
 
 class Player {
-private:
-    int id;
-    std::string name;
-    int score;
-    double deathTimer;
-    bool isAlive;
-    int attackRange;
-    Position position;
-    Position spawnPoint;
-    int numOfFlags;
-
 public:
     static const int fieldsToSerialize = 11;
 
@@ -31,26 +20,19 @@ public:
     {
     }
 
-    int getId() const { return id; }
-    std::string getName() const { return name; }
-    int getScore() const { return score; }
-    double getDeathTimer() const { return deathTimer; }
-    bool getIsAlive() const { return isAlive; }
-    int getAttackRange() const { return attackRange; }
-    Position getPosition() const { return position; }
-    Position getSpawnPoint() const { return spawnPoint; }
-    int getNumOfFlags() const { return numOfFlags; }
-
-    void setId(int newId) { id = newId; }
-    void setName(const std::string& newName) { name = newName; }
-    void setScore(int newScore) { score = newScore; }
-    void setDeathTimer(double newDeathTimer) { deathTimer = newDeathTimer; }
-    void setIsAlive(bool newIsAlive) { isAlive = newIsAlive; }
-    void setAttackRange(int newAttackRange) { attackRange = newAttackRange; }
-    void setPosition(const Position& newPosition) { position = newPosition; }
-    void setSpawnPoint(const Position& newSpawnPoint) { spawnPoint = newSpawnPoint; }
-    void setNumOfFlags(int newNumOfFlags) { numOfFlags = newNumOfFlags; }
-    
     std::string serialize();
     static Player deserialize(const std::string& ser);
+
+public:
+    int id;
+    int score;
+    int attackRange;
+    int numOfFlags;
+
+    Position position;
+    Position spawnPoint;
+
+    std::string name;
+    double deathTimer;
+    bool isAlive;
 };

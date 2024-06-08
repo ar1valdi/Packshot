@@ -16,6 +16,7 @@ enum ActionCode {
 
 class Action {
 public:
+    int playerID;
 	ActionCode actionCode;
     inline string serialize() {
         stringstream ss;

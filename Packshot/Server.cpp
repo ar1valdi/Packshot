@@ -7,6 +7,7 @@ Server::Server(const string& address, int port) {
 	this->address = address;
 	this->port = port;
 }
+
 bool Server::startListening(const string& address, int port) {
 	WSADATA wsadata;
 
@@ -78,8 +79,8 @@ void Server::handleClient(SOCKET& s) {
 		}
 		else {
 			Action a = Action::deserialize(recvBuf);
-			GameState gs = game->handleIngameRequest(a);
-			sendBuf = gs.serialize(1);
+			GameState gs = game->handleRequest(a);
+			sendBuf = gs.serialize();
 		}
 
 		bytesSent = send(s, sendBuf.c_str(), sendBuf.length() + 1, 0);
@@ -117,6 +118,9 @@ void Server::runListenThread() {
 	}
 }
 void Server::start() {
+	game = new Game();
+	game->start();
+
 	if (!startListening(address, port)) {
 		return;
 	}
@@ -131,6 +135,8 @@ void Server::start() {
 		}
 
 	}
+
+	game->stop();
 
 	closesocket(serverSocket);
 	cout << "Waiting for threads to close themselves\n";

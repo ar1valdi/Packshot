@@ -14,7 +14,7 @@ public:
 	bool isGameOver;
 
 	GameState();
-	string serialize(int a);
+	string serialize();
 	static GameState deserialize(const string& ser);
 };
 
