@@ -13,6 +13,7 @@ public:
 	vector<int> score;
 	bool isGameOver;
 
+	GameState();
 	string serialize(int a);
 	static GameState deserialize(const string& ser);
 };

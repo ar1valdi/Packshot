@@ -1,5 +1,10 @@
 #include "GameState.h"
 
+GameState::GameState() {
+    this->timer = 0;
+    this->isGameOver = false;
+}
+
 string GameState::serialize(int a) {
     stringstream ss;
 

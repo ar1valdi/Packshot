@@ -2,6 +2,7 @@
 #include <WS2tcpip.h>
 #include <iostream>
 #include <thread>
+#include "Consts.h"
 using namespace std;
 
 Connection::Connection() {
@@ -48,7 +49,7 @@ bool Connection::connectToServer(const string& address, int port) {
 GameState Connection::sendToServer(const string& req) {
 	int bytesSent = send(s, req.c_str(), req.length() + 1, 0);
 	int bytesRecv = SOCKET_ERROR;
-	char recvBuf[512];
+	char recvBuf[CLIENT_RECV_BUF];
 
 	if (bytesSent <= 0) {
 		closesocket(s);
@@ -60,7 +61,7 @@ GameState Connection::sendToServer(const string& req) {
 	while (bytesRecv == SOCKET_ERROR) {
 		int err = WSAEWOULDBLOCK;
 		while (err == WSAEWOULDBLOCK) {
-			bytesRecv = recv(s, recvBuf, 32, 0);
+			bytesRecv = recv(s, recvBuf, 1024, 0);
 			this_thread::sleep_for(chrono::milliseconds(100));
 			err = WSAGetLastError();
 		}
@@ -80,6 +81,9 @@ GameState Connection::sendToServer(const string& req) {
 	}
 
 	return GameState::deserialize(recvBuf);
+}
+GameState Connection::fetch() {
+	return sendToServer(FETCH_MSG);
 }
 Connection::~Connection() {
 	closesocket(s);
