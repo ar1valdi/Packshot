@@ -70,6 +70,12 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ExecutablePath>$(VC_ExecutablePath_x64);$(CommonExecutablePath);../SharedClasses</ExecutablePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../SharedClasses</IncludePath>
+    <ExternalIncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../SharedClasses</ExternalIncludePath>
+    <SourcePath>$(VC_SourcePath);../SharedClasses</SourcePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -131,12 +137,15 @@
     <ClCompile Include="..\SharedClasses\GameState.cpp" />
     <ClCompile Include="..\SharedClasses\Player.cpp" />
     <ClCompile Include="Connection.cpp" />
-    <ClCompile Include="GameState.cpp" />
     <ClCompile Include="PackshotClient.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\SharedClasses\Action.h" />
+    <ClInclude Include="..\SharedClasses\Consts.h" />
+    <ClInclude Include="..\SharedClasses\GameState.h" />
+    <ClInclude Include="..\SharedClasses\Player.h" />
+    <ClInclude Include="..\SharedClasses\Position.h" />
     <ClInclude Include="Connection.h" />
-    <ClInclude Include="GameState.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
