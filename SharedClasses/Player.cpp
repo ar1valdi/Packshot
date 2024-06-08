@@ -29,5 +29,10 @@ Player Player::deserialize(const string& ser) {
 	sspawnPoint = Position::deserialize(temp1 + " " + temp2);
 	ss >> snumOfFlags;
 	Player p(sid, sname, sscore, sdeathTimer, sisAlive, sattackRange, sposition, sspawnPoint, snumOfFlags);
+
+	if (ss.fail()) {
+		throw runtime_error("Failed to deserialize Player");
+	}
+
 	return p;
 }

@@ -23,6 +23,11 @@ struct Position {
 		int sx, sy;
 		ss >> sx;
 		ss >> sy;
+
+		if (ss.fail()) {
+			throw runtime_error("Failed to deserialize Position");
+		}
+
 		return Position(sx, sy);
 	}
 };

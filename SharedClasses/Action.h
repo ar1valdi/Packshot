@@ -17,12 +17,12 @@ enum ActionCode {
 class Action {
 public:
 	ActionCode actionCode;
-    string serialize() {
+    inline string serialize() {
         stringstream ss;
         ss << actionCode;
         return ss.str();
     }
-    static Action deserialize(const string& ser) {
+    inline static Action deserialize(const string& ser) {
         Action action;
         stringstream ss(ser);
         int code;

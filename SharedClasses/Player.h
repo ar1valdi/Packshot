@@ -15,6 +15,8 @@ private:
     int numOfFlags;
 
 public:
+    static const int fieldsToSerialize = 11;
+
     Player() = default;
     ~Player() = default;
     Player(const Player&) = default;
