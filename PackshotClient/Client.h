@@ -8,10 +8,9 @@
 class Client {
 private:
 	Connection connection;
-	Player myPlayer;
+	Player* myPlayer;
 	std::vector<std::vector<char>> map;
 	GameState gamestate;
-	std::vector<int> scores;
 	bool running;
 	int direction;
 
@@ -25,6 +24,7 @@ private:
 	void update(GameState& newGameState);
 	void draw();
 	void connect();
+	void attack();
 	vector<vector<char>> loadMap(const string filename);
 
 public:

@@ -34,7 +34,7 @@ char Client::getPressedKey() {
 }
 
 void Client::start() {
-    //connect();
+    connect();
     mainLoop();
 }
 
@@ -69,20 +69,23 @@ Client::Client() {
 
     map = loadMap("map.txt");
 
-    myPlayer.setPosition({1, 1});
-    map[myPlayer.getPosition().x][myPlayer.getPosition().y] = '@';
+    myPlayer->position = {1, 1};
+    map[myPlayer->position.x][myPlayer->position.y] = '@';
 }
 
 void Client::mainLoop() {
+    fetch();
+    draw();
+
     thread input(&Client::handleInputAsync, this);
     unique_lock<mutex> lock(mapChange, defer_lock);
 
     while (running) {
         fetch();
         lock.lock();
-        draw();
+        //draw();
         lock.unlock();
-        Sleep(5);
+        Sleep(10);
     }
 
     input.join();
@@ -100,10 +103,11 @@ void Client::makeAction(char input, char lastInput) {
     performPreAction(input);
     lock.unlock();
 
-    auto sendThreadFunc = [this, input]() {
+    /*auto sendThreadFunc = [this, input]() {
         sendToServer(input);
-    };
+    };*/
     //thread send(sendThreadFunc);
+    sendToServer(input);
 }
 
 // TODO 
@@ -130,8 +134,8 @@ void Client::handleInputAsync() {
 }
 
 bool Client::validateInput(char input) {
-    int x = myPlayer.getPosition().x;
-    int y = myPlayer.getPosition().y;
+    int x = myPlayer->position.x;
+    int y = myPlayer->position.y;
 
     switch (input) {
     case UP:
@@ -158,10 +162,14 @@ bool Client::validateInput(char input) {
     return true;
 }
 
+void Client::attack() {
+
+}
+
 // TODO
 void Client::performPreAction(char input) {
-    int x = myPlayer.getPosition().x;
-    int y = myPlayer.getPosition().y;
+    int x = myPlayer->position.x;
+    int y = myPlayer->position.y;
     int dx = 0;
     int dy = 0;
     map[y][x] = ' ';
@@ -183,11 +191,11 @@ void Client::performPreAction(char input) {
         direction = LEFT;
     }
     if (input == ATTACK_MOVE) {
-
+        attack();
     }
 
     map[y + dy][x + dx] = '@';
-    myPlayer.setPosition({ x + dx, y + dy });
+    myPlayer->position = { x + dx, y + dy };
 }
 
 ActionCode Client::inputToActionCode(char input) {
@@ -206,6 +214,7 @@ ActionCode Client::inputToActionCode(char input) {
         break;
     case ATTACK_MOVE:
         return ActionCode(ATTACK);
+        break;
     }
     return ActionCode(PRESENT);
 }
@@ -217,30 +226,40 @@ void Client::sendToServer(char input) {
     string serializedAction = action.serialize();
     GameState newGameState = connection.sendToServer(serializedAction);
 
-    unique_lock<mutex> lock(mapChange);
     update(newGameState);
-    lock.unlock();
 }
 
 // TODO
 void Client::fetch() {
+    GameState newGameState = connection.fetch();
+    update(newGameState);
 }
 
 // TODO
 void Client::update(GameState& newGameState) {
+    unique_lock<mutex> lock(mapChange);
     for (auto player : gamestate.players) {
         int x = player.getPosition().x;
         int y = player.getPosition().y;
 
-        map[y][x] = ' ';
+        if (player.isAlive) {
+            map[y][x] = ' ';
+        }
     }
 
     for (auto player : newGameState.players) {
         int x = player.getPosition().x;
         int y = player.getPosition().y;
 
-        map[y][x] = '@';
+        if (player.isAlive) {
+            map[y][x] = '@';
+        }
     }
+
+    gamestate = newGameState;
+    myPlayer = &gamestate.players[0]; // JUST FOR NOW
+
+    lock.unlock();
 }
 
 void Client::clearScreen() {

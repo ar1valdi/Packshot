@@ -3,7 +3,7 @@
 #include "Position.h"
 
 class Player {
-private:
+public:
     int id;
     std::string name;
     int score;
