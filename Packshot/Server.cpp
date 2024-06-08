@@ -48,8 +48,7 @@ bool Server::startListening(const string& address, int port) {
 void Server::handleClient(SOCKET& s) {
 	int bytesSent;
 	int bytesRecv = SOCKET_ERROR;
-	char sendBuf[32] = "Hello world - server";
-	char recvBuf[32];
+	char recvBuf[512];
 
 	u_long mode = 1;
 	ioctlsocket(s, FIONBIO, &mode);
@@ -57,7 +56,7 @@ void Server::handleClient(SOCKET& s) {
 	while (!quit) {
 		int err = WSAEWOULDBLOCK;
 		while (err == WSAEWOULDBLOCK) {
-			bytesRecv = recv(s, recvBuf, 32, 0);
+			bytesRecv = recv(s, recvBuf, 512, 0);
 			this_thread::sleep_for(chrono::milliseconds(100));
 			err = WSAGetLastError();
 		}
@@ -72,21 +71,18 @@ void Server::handleClient(SOCKET& s) {
 		}
 		cout << "Recieved " << bytesRecv << " bytes: " << recvBuf << '\n';
 
-		// tutaj bd wywolanie metody game
+		Action a = Action::deserialize(recvBuf);
+		GameState gs = game->handleIngameRequest(a);
+		string sendBuf = gs.serialize();
 
-		err = WSAEWOULDBLOCK;
-		while (err == WSAEWOULDBLOCK) {
-			bytesSent = send(s, recvBuf, 32, 0);
-			this_thread::sleep_for(chrono::milliseconds(100));
-			err = WSAGetLastError();
-		}
+		bytesSent = send(s, sendBuf.c_str(), sendBuf.length() + 1, 0);
 
 		if (bytesSent == 0) {
 			cout << "Connection closed\n";
 			break;
 		}
 		else if (bytesSent < 0) {
-			perror("send failed: ");
+			cout << "send failed: " << WSAGetLastError();
 			break;
 		}
 		cout << "Sent " << bytesSent << " bytes: " << sendBuf << '\n';
