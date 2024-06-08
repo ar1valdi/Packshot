@@ -3,7 +3,7 @@
 
 int main()
 {
-	Player p("Jan", 1, 2, true, 3, { 4,4 }, { 5,5 }, 6);
+	Player p(12, "Jan", 1, 2, true, 3, { 4,4 }, { 5,5 }, 6);
 	string s = p.serialize();
 	Player p2 = Player::deserialize(s);
 	int x = 10;
