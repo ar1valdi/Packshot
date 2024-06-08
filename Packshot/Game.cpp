@@ -14,7 +14,7 @@ Game::~Game()
 void Game::start()
 {
 	m_running = true;
-	m_updateThread = thread(&Game::updateClient, this);
+	m_updateThread = thread(&Game::update, this);
 }
 
 void Game::stop()
@@ -26,6 +26,15 @@ void Game::stop()
 }
 
 GameState Game::handleRequest(Action a) {
+	m_gameState.timer = m_timer;
+
+	if (a.actionCode == ActionCode::NEW_PLAYER) {
+		m_gameState.players.push_back(Player(m_gameState.players.size(), "Bob", 0, 0.0, 
+				true, 1.0, { 1, 1 }, { 1, 1 }, 0));
+
+		return m_gameState;
+	}
+
 	for (auto& player : m_gameState.players) {
 		if (player.id != a.playerID) {
 			continue;
@@ -51,8 +60,6 @@ GameState Game::handleRequest(Action a) {
 
 		handleFlags(player);
 	}
-
-	m_gameState.timer = m_timer;
 
 	return m_gameState;
 }
@@ -90,7 +97,7 @@ void Game::handleAttack(Player player)
 	}
 }
 
-void Game::updateClient()
+void Game::update()
 {
 	while (m_running) {
 		for (auto& flag : m_gameState.flags) {
@@ -100,10 +107,12 @@ void Game::updateClient()
 
 			flag.capturingTimer += GAME_UPDATE_RATE;
 
-			if (flag.capturingTimer % 1000 == 0) {
-				for (auto& player : m_gameState.players) {
-					player.score += FLAG_POINT_GAIN;
-				}
+			if (flag.capturingTimer % 1000 != 0) {
+				continue;
+			}
+
+			for (auto& player : m_gameState.players) {
+				player.score += FLAG_POINT_GAIN;
 			}
 		}
 
