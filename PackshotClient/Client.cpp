@@ -65,8 +65,8 @@ Client::Client() {
 
     map = loadMap("map.txt");
 
-    myPlayer.setPositions({1, 1});
-    map[myPlayer.getPositions().x][myPlayer.getPositions().y] = '@';
+    myPlayer.setPosition({1, 1});
+    map[myPlayer.getPosition().x][myPlayer.getPosition().y] = '@';
 }
 
 void Client::mainLoop() {
@@ -126,8 +126,8 @@ void Client::handleInputAsync() {
 }
 
 bool Client::validateInput(char input) {
-    int x = myPlayer.getPositions().x;
-    int y = myPlayer.getPositions().y;
+    int x = myPlayer.getPosition().x;
+    int y = myPlayer.getPosition().y;
 
     switch (input) {
     case UP:
@@ -156,8 +156,8 @@ bool Client::validateInput(char input) {
 
 // TODO
 void Client::performPreAction(char input) {
-    int x = myPlayer.getPositions().x;
-    int y = myPlayer.getPositions().y;
+    int x = myPlayer.getPosition().x;
+    int y = myPlayer.getPosition().y;
     int dx = 0;
     int dy = 0;
     map[y][x] = ' ';
@@ -176,7 +176,7 @@ void Client::performPreAction(char input) {
     }
 
     map[y + dy][x + dx] = '@';
-    myPlayer.setPositions({ x + dx, y + dy });
+    myPlayer.setPosition({ x + dx, y + dy });
 }
 
 ActionCode Client::inputToActionCode(char input) {
