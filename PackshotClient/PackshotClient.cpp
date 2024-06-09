@@ -15,5 +15,7 @@ int main()
 {
     Client client;
     client.start();
+    int x;
+    cin >> x;
 }
 

@@ -25,7 +25,7 @@ private:
     mutex fetching;
 
     char getPressedKey();
-    void connect();
+    bool connect();
     std::vector<std::vector<char>> loadMap(const std::string filename);
     void mainLoop();
     void makeAction(char input, char lastInput);

@@ -27,6 +27,7 @@ private:
     std::vector<std::thread> threads;
     std::vector<SOCKET> clientSockets;
     std::mutex clientSocketsMutex;
+    std::atomic<int> connectedClients;
 
     bool startListening(const std::string& address, int port);
     void handleClient(SOCKET s);

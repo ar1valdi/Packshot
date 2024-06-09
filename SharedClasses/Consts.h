@@ -7,6 +7,9 @@
 #define ESCAPE VK_ESCAPE
 #define ATTACK_MOVE 5
 // BOTH
+#define NOT_ENOUGHT_SLOTS "NS"
+#define CONNECTED_CLIENT "CC"
+
 #define FETCH_MSG "FETCH"
 #define IP_ADDRESS "127.0.0.1"
 #define PORT 12345

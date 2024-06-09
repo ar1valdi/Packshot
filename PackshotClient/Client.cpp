@@ -36,12 +36,18 @@ char Client::getPressedKey() {
 }
 
 void Client::start() {
-    connect();
+    if (!connect()) {
+        cerr << "Can't connect to the server\n";
+        return;
+    }
     mainLoop();
 }
 
-void Client::connect() {
+bool Client::connect() {
     running = connection.connectToServer();
+    if (!running) {
+        return false;
+    }
 
     Action a;
     a.actionCode = NEW_PLAYER;
@@ -52,6 +58,7 @@ void Client::connect() {
     cout << "moje id (:) " << id << '\n';
 
     Sleep(100);
+    return true;
 }
 
 vector<vector<char>> Client::loadMap(const string filename) {

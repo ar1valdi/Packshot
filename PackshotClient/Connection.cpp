@@ -42,6 +42,16 @@ bool Connection::connectToServer(const string& address, int port) {
 		return false;
 	}
 
+	char recvBuf[1024];
+	int bytesRecv = recv(s, recvBuf, sizeof(recvBuf), 0);
+
+	if (strcmp(recvBuf, NOT_ENOUGHT_SLOTS) == 0) {
+		cout << "Server is full\n";
+		closesocket(s);
+		WSACleanup();
+		return false;
+	}
+
 	u_long mode = 1;
 	ioctlsocket(s, FIONBIO, &mode);
 

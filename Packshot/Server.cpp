@@ -8,6 +8,7 @@ using namespace std;
 
 Server::Server(const string& address, int port) : address(address), port(port), quit(false) {
     threads.reserve(MAX_CLIENTS_NUM + 1);
+    connectedClients.store(0);
 }
 
 bool Server::startListening(const string& address, int port) {
@@ -100,6 +101,7 @@ void Server::handleClient(SOCKET s) {
         }
     }
 
+    connectedClients.store(connectedClients.load() - 1);
     closesocket(s);
     {
         lock_guard<mutex> lock(clientSocketsMutex);
@@ -121,6 +123,7 @@ void Server::runListenThread() {
         int result = select(0, &readfds, NULL, NULL, &timeout);
         if (result > 0 && FD_ISSET(serverSocket, &readfds)) {
             SOCKET newSocket = accept(serverSocket, NULL, NULL);
+
             if (newSocket == INVALID_SOCKET) {
                 int err = WSAGetLastError();
                 if (err != WSAEWOULDBLOCK && err != WSAECONNRESET) {
@@ -129,12 +132,21 @@ void Server::runListenThread() {
                 continue;
             }
 
+            if (connectedClients >= MAX_CLIENTS_NUM) {
+                string sendBuf = NOT_ENOUGHT_SLOTS;
+                int bytesSent = send(newSocket, sendBuf.c_str(), sendBuf.length() + 1, 0);
+                continue;
+            }
+            string sendBuf = CONNECTED_CLIENT;
+            int bytesSent = send(newSocket, sendBuf.c_str(), sendBuf.length() + 1, 0);
+
             cout << "Client connected\n";
             {
                 lock_guard<mutex> lock(clientSocketsMutex);
                 clientSockets.push_back(newSocket);
             }
 
+            connectedClients.store(connectedClients.load() + 1);
             threads.emplace_back(&Server::handleClient, this, newSocket);
         }
         else if (result == SOCKET_ERROR) {
