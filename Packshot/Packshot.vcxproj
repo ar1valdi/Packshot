@@ -76,6 +76,11 @@
     <ExternalIncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../SharedClasses</ExternalIncludePath>
     <SourcePath>$(VC_SourcePath);../SharedClasses</SourcePath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../SharedClasses</IncludePath>
+    <ExternalIncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);../SharedClasses</ExternalIncludePath>
+    <SourcePath>$(VC_SourcePath);../SharedClasses</SourcePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>

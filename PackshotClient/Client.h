@@ -7,6 +7,7 @@
 
 class Client {
 private:
+	int id;
 	Connection connection;
 	Player* myPlayer;
 	std::vector<std::vector<char>> map;

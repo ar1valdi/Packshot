@@ -6,13 +6,12 @@ class Player {
 public:
     static const int fieldsToSerialize = 11;
 
-    Player();
-    ~Player();
+    Player() = default;
+    ~Player() = default;
 
     Player(const Player&) = default;
     Player& operator=(const Player&) = default;
 
-    Player(int id);
 
     Player(int id, const std::string& name, int score, double deathTimer, bool isAlive,
         int attackRange, const Position& position, const Position& spawnPoint,

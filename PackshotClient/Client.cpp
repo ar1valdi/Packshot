@@ -12,6 +12,11 @@ using namespace std;
 mutex mapChange;
 
 char Client::getPressedKey() {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (GetForegroundWindow() != GetConsoleWindow()) {
+        return NO_INPUT;
+    }
+
     if (GetAsyncKeyState('W') | GetAsyncKeyState(VK_UP) & 0x8000) {
         return UP;
     }
@@ -44,6 +49,10 @@ void Client::connect() {
     Action a;
     a.actionCode = NEW_PLAYER;
     gamestate = connection.sendToServer(a.serialize());
+    id = gamestate.players.size() - 1;
+    myPlayer = &gamestate.players[id];
+    gotoxy(1, 25);
+    cout << "moje id (:) " << id << '\n';
 
     Sleep(100);
 }
@@ -71,7 +80,10 @@ Client::Client() {
     running = true;
     direction = RIGHT;
 
+
     map = loadMap("map.txt");
+    gotoxy(1, 20);
+    cout << "zaladowalem mape :D \n";
 }
 
 void Client::mainLoop() {
@@ -82,12 +94,17 @@ void Client::mainLoop() {
     thread input(&Client::handleInputAsync, this);
     unique_lock<mutex> lock(mapChange, defer_lock);
 
+    gotoxy(1, 21);
+    cout << "startuje petle :3 \n";
+
     while (running) {
         fetch();
         lock.lock();
         draw();
         lock.unlock();
-        Sleep(10);
+        gotoxy(1, 22);
+        cout << "zdrawowane :P\n";
+        Sleep(50);
     }
 
     input.join();
@@ -129,6 +146,8 @@ void Client::handleInputAsync() {
         case NO_INPUT:
             break;
         default:
+            gotoxy(1, 23);
+            cout << "kliknalem B)\n";
             makeAction(input, lastInput);
             break;
         }
@@ -196,6 +215,9 @@ void Client::performPreAction(char input) {
         attack();
     }
 
+    gotoxy(0, 15);
+    cout << "moved to " << x + dx << ", " << y + dy << '\n';
+
     map[y + dy][x + dx] = '@';
     myPlayer->position = { x + dx, y + dy };
 }
@@ -225,6 +247,7 @@ void Client::sendToServer(char input) {
     ActionCode actionCode = inputToActionCode(input);
     Action action;
     action.actionCode = actionCode;
+    action.playerID = id;
     string serializedAction = action.serialize();
     GameState newGameState = connection.sendToServer(serializedAction);
 
@@ -259,7 +282,7 @@ void Client::update(GameState& newGameState) {
     }
 
     gamestate = newGameState;
-    myPlayer = &gamestate.players[0]; // JUST FOR NOW
+    myPlayer = &gamestate.players[id]; // JUST FOR NOW
 
     lock.unlock();
 }

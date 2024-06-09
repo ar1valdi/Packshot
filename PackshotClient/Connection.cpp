@@ -6,23 +6,25 @@
 using namespace std;
 
 Connection::Connection() {
-	s = SOCKET_ERROR;
+	s = INVALID_SOCKET;
 }
+
 bool Connection::connectToServer() {
 	return connectToServer("127.0.0.1", 12345);
 }
+
 bool Connection::connectToServer(const string& address, int port) {
 	WSADATA wsadata;
 
-	int err = WSAStartup((2, 2), &wsadata);
+	int err = WSAStartup(MAKEWORD(2, 2), &wsadata);
 	if (err != NO_ERROR) {
-		cout << "WSA init error: " << WSAGetLastError();
+		cerr << "WSA init error: " << WSAGetLastError() << endl;
 		return false;
 	}
 
 	s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (s == INVALID_SOCKET) {
-		cout << "Error creating client socket: " << WSAGetLastError();
+		cerr << "Error creating client socket: " << WSAGetLastError() << endl;
 		WSACleanup();
 		return false;
 	}
@@ -33,9 +35,8 @@ bool Connection::connectToServer(const string& address, int port) {
 	InetPton(AF_INET, __TEXT("127.0.0.1"), &service.sin_addr.s_addr);
 	service.sin_port = htons(port);
 
-	if (connect(s, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR)
-	{
-		cout << "Failed to connect: " << WSAGetLastError();
+	if (connect(s, (SOCKADDR*)&service, sizeof(service)) == SOCKET_ERROR) {
+		cerr << "Failed to connect: " << WSAGetLastError() << endl;
 		closesocket(s);
 		WSACleanup();
 		return false;
@@ -46,46 +47,58 @@ bool Connection::connectToServer(const string& address, int port) {
 
 	return true;
 }
+
 GameState Connection::sendToServer(const string& req) {
 	int bytesSent = send(s, req.c_str(), req.length() + 1, 0);
-	int bytesRecv = SOCKET_ERROR;
-	char recvBuf[CLIENT_RECV_BUF];
-
 	if (bytesSent <= 0) {
 		closesocket(s);
 		WSACleanup();
-		throw new exception("send failed: " + WSAGetLastError());
+		throw runtime_error("send failed: " + to_string(WSAGetLastError()));
 	}
 
 	//cout << "Bytes sent: " << bytesSent << '\n';
-	while (bytesRecv == SOCKET_ERROR) {
-		int err = WSAEWOULDBLOCK;
-		while (err == WSAEWOULDBLOCK) {
-			bytesRecv = recv(s, recvBuf, 1024, 0);
-			this_thread::sleep_for(chrono::milliseconds(100));
-			err = WSAGetLastError();
-		}
 
+	fd_set readfds;
+	FD_ZERO(&readfds);
+	FD_SET(s, &readfds);
+
+	timeval timeout;
+	timeout.tv_sec = 5;  // Set timeout for select
+	timeout.tv_usec = 0;
+
+	int bytesRecv = SOCKET_ERROR;
+	char recvBuf[CLIENT_RECV_BUF] = { 0 };
+
+	if (select(0, &readfds, NULL, NULL, &timeout) > 0) {
+		bytesRecv = recv(s, recvBuf, CLIENT_RECV_BUF, 0);
 		if (bytesRecv == 0) {
 			closesocket(s);
 			WSACleanup();
-			throw new exception("connection closed");
+			throw runtime_error("connection closed");
 		}
 		else if (bytesRecv < 0) {
 			closesocket(s);
 			WSACleanup();
-			throw new exception("recv failed: " + err);
+			throw runtime_error("recv failed: " + to_string(WSAGetLastError()));
 		}
-		//cout << "Recieved " << bytesRecv << " bytes: " << recvBuf << '\n';
-
+		//cout << "Received " << bytesRecv << " bytes: " << recvBuf << '\n';
+	}
+	else {
+		closesocket(s);
+		WSACleanup();
+		throw runtime_error("recv timeout");
 	}
 
 	return GameState::deserialize(recvBuf);
 }
+
 GameState Connection::fetch() {
 	return sendToServer(FETCH_MSG);
 }
+
 Connection::~Connection() {
-	closesocket(s);
-	WSACleanup();
+	if (s != INVALID_SOCKET) {
+		closesocket(s);
+		WSACleanup();
+	}
 }
