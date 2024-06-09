@@ -9,6 +9,7 @@
 #include "GameState.h"
 #include "Action.h"
 #include "Game.h"
+#include "QueueManager.h"
 
 #define MAX_CLIENTS_NUM 10
 
@@ -19,6 +20,7 @@ public:
     void stop();
 
 private:
+    QueueManager qm;
     std::atomic<bool> isInQueue;
     std::string address;
     int port;
@@ -32,6 +34,8 @@ private:
 
     bool startListening(const std::string& address, int port);
     void handleClient(SOCKET s);
+    void sendWithLog(const SOCKET& s, std::string& sendBuf, int& retflag);
+    void handleClientInGame(char  recvBuf[1024], string& sendBuf);
     void runListenThread();
     void cleanUpThreads();
 };

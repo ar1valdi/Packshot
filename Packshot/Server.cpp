@@ -10,6 +10,7 @@ using namespace std;
 Server::Server(const string& address, int port) : address(address), port(port), quit(false) {
     threads.reserve(MAX_CLIENTS_NUM + 1);
     connectedClients.store(0);
+    isInQueue.store(true);
 }
 
 bool Server::startListening(const string& address, int port) {
@@ -68,6 +69,7 @@ void Server::handleClient(SOCKET s) {
 
         int result = select(0, &readfds, NULL, NULL, &timeout);
         if (result > 0 && FD_ISSET(s, &readfds)) {
+
             bytesRecv = recv(s, recvBuf, sizeof(recvBuf), 0);
             if (bytesRecv == SOCKET_ERROR) {
                 cerr << "recv failed: " << WSAGetLastError() << endl;
@@ -82,21 +84,28 @@ void Server::handleClient(SOCKET s) {
             lastReceivedTime = std::chrono::steady_clock::now();
 
             string sendBuf;
-            if (strcmp(recvBuf, FETCH_MSG) == 0) {
-                sendBuf = game->getSerializedGameState();
+            if (isInQueue.load()) {
+                qm.processAction(Action::deserialize(recvBuf));
+                sendBuf = qm.serializePlayerStates();
+
+                int retflag;
+                sendWithLog(s, sendBuf, retflag);
+                if (retflag == 2) break;
+
+                if (qm.allPlayersReady()) {
+                    sendBuf = START_GAME;
+                }
+                else {
+                    sendBuf = STILL_QUEUE;
+                }
             }
             else {
-                Action a = Action::deserialize(recvBuf);
-                GameState gs = game->handleRequest(a);
-                sendBuf = gs.serialize();
-            }
+                handleClientInGame(recvBuf, sendBuf);
 
-            int bytesSent = send(s, sendBuf.c_str(), sendBuf.length() + 1, 0);
-            if (bytesSent == SOCKET_ERROR) {
-                cerr << "send failed: " << WSAGetLastError() << endl;
-                break;
+                int retflag;
+                sendWithLog(s, sendBuf, retflag);
+                if (retflag == 2) break;
             }
-            cout << "Sent " << bytesSent << " bytes: " << sendBuf << '\n';
         }
         else if (result == SOCKET_ERROR) {
             cerr << "select failed: " << WSAGetLastError() << endl;
@@ -118,6 +127,29 @@ void Server::handleClient(SOCKET s) {
         clientSockets.erase(remove(clientSockets.begin(), clientSockets.end(), s), clientSockets.end());
     }
     cout << "Closing thread " << this_thread::get_id() << endl;
+}
+
+void Server::sendWithLog(const SOCKET& s, std::string& sendBuf, int& retflag)
+{
+    retflag = 1;
+    int bytesSent = send(s, sendBuf.c_str(), sendBuf.length() + 1, 0);
+    if (bytesSent == SOCKET_ERROR) {
+        cerr << "send failed: " << WSAGetLastError() << endl;
+        { retflag = 2; return; };;
+    }
+    cout << "Sent " << bytesSent << " bytes: " << sendBuf << '\n';
+}
+
+void Server::handleClientInGame(char recvBuf[1024], string& sendBuf)
+{
+    if (strcmp(recvBuf, FETCH_MSG) == 0) {
+        sendBuf = game->getSerializedGameState();
+    }
+    else {
+        Action a = Action::deserialize(recvBuf);
+        GameState gs = game->handleRequest(a);
+        sendBuf = gs.serialize();
+    }
 }
 
 void Server::runListenThread() {
@@ -142,7 +174,7 @@ void Server::runListenThread() {
                 continue;
             }
 
-            if (connectedClients >= MAX_CLIENTS_NUM) {
+            if (connectedClients.load() >= MAX_CLIENTS_NUM || !isInQueue.load()) {
                 string sendBuf = NOT_ENOUGHT_SLOTS;
                 int bytesSent = send(newSocket, sendBuf.c_str(), sendBuf.length() + 1, 0);
                 continue;

@@ -13,6 +13,8 @@
 #define FETCH_MSG "FETCH"
 #define IP_ADDRESS "127.0.0.1"
 #define PORT 12345
+#define START_GAME "SG"
+#define STILL_QUEUE "SQ"
 
 // SERVER
 #define SERVER_RECV_BUF 1024
@@ -29,3 +31,4 @@
 #define FLAG_POINT_GAIN 1
 
 #define GAME_UPDATE_RATE 10
+
