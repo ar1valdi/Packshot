@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "Consts.h"
+#include <fstream>
 
 Game::Game() 
 	: m_timer(0), m_running(false)
@@ -14,6 +15,7 @@ Game::~Game()
 void Game::start()
 {
 	m_running = true;
+	loadMap("map.txt");
 	m_updateThread = thread(&Game::update, this);
 }
 
@@ -25,12 +27,39 @@ void Game::stop()
 	}
 }
 
+void Game::loadMap(const string filename) {
+	ifstream file(filename);
+	playerPositions.reserve(4);
+
+	string line;
+	int lineNo = 0;
+	while (getline(file, line)) {
+		vector<char> row(line.begin(), line.end());
+		int col = 0;
+		for (auto& symbol : row) {
+			if (symbol == 'F') {
+				Position pos(col, lineNo);
+				Flag newFlag(pos, 5000, 5000, -1);
+				m_gameState.flags.push_back(newFlag);
+			}
+			if (symbol == '1' || symbol == '2' || symbol == '3' || symbol == '4') {
+				playerPositions.push_back({ col, lineNo });
+			}
+			col++;
+		}
+		lineNo++;
+	}
+
+	file.close();
+}
+
 GameState Game::handleRequest(Action a) {
 	m_gameState.timer = m_timer;
 
 	if (a.actionCode == ActionCode::NEW_PLAYER) {
+		int playerCount = m_gameState.players.size();
 		m_gameState.players.push_back(Player(m_gameState.players.size(), "Bob", 0, 0.0, 
-				true, 1.0, { 1, 1 }, { 1, 1 }, 0));
+				true, 1.0, playerPositions[playerCount], playerPositions[playerCount], 0));
 
 		return m_gameState;
 	}
@@ -101,7 +130,7 @@ void Game::handleAttack(Player player)
 
 void Game::update()
 {
-	/*while (m_running) {
+	while (m_running) {
 		for (auto& flag : m_gameState.flags) {
 			if (flag.ownerID == -1) {
 				continue;
@@ -118,7 +147,16 @@ void Game::update()
 			}
 		}
 
+		for (auto& player : m_gameState.players) {
+			if (player.deathTimer > 0) {
+				player.deathTimer -= GAME_UPDATE_RATE;
+				if (player.deathTimer <= 0) {
+					player.isAlive = true;
+					player.deathTimer = 0;
+				}
+			}
+		}
 		m_timer += GAME_UPDATE_RATE;
 		this_thread::sleep_for(chrono::milliseconds(GAME_UPDATE_RATE));
-	}*/
+	}
 }

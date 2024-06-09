@@ -73,6 +73,14 @@ vector<vector<char>> Client::loadMap(const string filename) {
     string line;
     while (getline(file, line)) {
         vector<char> row(line.begin(), line.end());
+        for (auto& symbol : row) {
+            if (symbol == 'F') {
+                symbol = ' ';
+            }
+            if (symbol == '1' || symbol == '2' || symbol == '3' || symbol == '4') {
+                symbol = ' ';
+            }
+        }
         newMap.push_back(row);
     }
 
@@ -86,11 +94,9 @@ Client::Client() {
 
     map = loadMap("map.txt");
     gotoxy(1, 20);
-    cout << "zaladowalem mape :D \n";
 }
 
 void Client::mainLoop() {
-    cout << "fetching\n";
     fetch();
     draw();
 
@@ -99,14 +105,12 @@ void Client::mainLoop() {
     unique_lock<mutex> lock(mapChange, defer_lock);
 
     gotoxy(1, 21);
-    cout << "startuje petle :3 \n";
 
     while (running) {
         lock.lock();
         draw();
         lock.unlock();
         gotoxy(1, 22);
-        cout << "zdrawowane :P\n";
         Sleep(50);
     }
 
@@ -129,7 +133,6 @@ void Client::makeAction(char input, char lastInput) {
     sendToServer(input);
 }
 
-// TODO 
 void Client::handleInputAsync() {
     char input = NO_INPUT;
     char lastInput = NO_INPUT;
@@ -145,8 +148,10 @@ void Client::handleInputAsync() {
         case NO_INPUT:
             break;
         default:
+            if (!myPlayer->isAlive) {
+                break;
+            }
             gotoxy(1, 23);
-            cout << "kliknalem B)\n";
             makeAction(input, lastInput);
             break;
         }
