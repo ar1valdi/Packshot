@@ -18,7 +18,7 @@ public:
         int numOfFlags)
         : id(id), name(name), score(score), deathTimer(deathTimer), isAlive(isAlive),
         attackRange(attackRange), position(position), spawnPoint(spawnPoint),
-        numOfFlags(numOfFlags)
+        numOfFlags(numOfFlags), isAttacking(false)
     {
     }
 
@@ -30,6 +30,7 @@ public:
     int score;
     int attackRange;
     int numOfFlags;
+    bool isAttacking;
 
     Position position;
     Position spawnPoint;

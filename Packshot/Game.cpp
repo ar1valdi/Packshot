@@ -113,8 +113,9 @@ void Game::handleFlags(Player player)
 	}
 }
 
-void Game::handleAttack(Player player)
+void Game::handleAttack(Player& player)
 {
+	player.isAttacking = true;
 	for (auto& other : m_gameState.players) {
 		if (other.position.x - 1 == player.position.x ||
 			other.position.x + 1 == player.position.x ||
@@ -145,7 +146,9 @@ void Game::update()
 			}
 
 			for (auto& player : m_gameState.players) {
-				player.score += FLAG_POINT_GAIN;
+				if (player.id == flag.ownerID) {
+					player.score += FLAG_POINT_GAIN;
+				}
 			}
 		}
 
@@ -155,6 +158,12 @@ void Game::update()
 				if (player.deathTimer <= 0) {
 					player.isAlive = true;
 					player.deathTimer = 0;
+				}
+			}
+			
+			for (auto& flag : m_gameState.flags) {
+				if (flag.position == player.position) {
+					flag.ownerID = player.id;
 				}
 			}
 		}

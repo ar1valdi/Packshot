@@ -29,7 +29,7 @@ private:
 
 private:
 	void handleFlags(Player player);
-	void handleAttack(Player player);
+	void handleAttack(Player& player);
 
 	void update();
 	void loadMap(const string filename);
