@@ -4,12 +4,9 @@
 #include <thread>
 #include <fstream>
 #include <iostream>
-#include "Action.h"
-#include <mutex>
+#include <stdexcept>
 
 using namespace std;
-
-mutex mapChange;
 
 char Client::getPressedKey() {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -17,16 +14,16 @@ char Client::getPressedKey() {
         return NO_INPUT;
     }
 
-    if (GetAsyncKeyState('W') | GetAsyncKeyState(VK_UP) & 0x8000) {
+    if ((GetAsyncKeyState('W') | GetAsyncKeyState(VK_UP)) & 0x8000) {
         return UP;
     }
-    if (GetAsyncKeyState('A') | GetAsyncKeyState(VK_LEFT) & 0x8000) {
+    if ((GetAsyncKeyState('A') | GetAsyncKeyState(VK_LEFT)) & 0x8000) {
         return LEFT;
     }
-    if (GetAsyncKeyState('S') | GetAsyncKeyState(VK_DOWN) & 0x8000) {
+    if ((GetAsyncKeyState('S') | GetAsyncKeyState(VK_DOWN)) & 0x8000) {
         return DOWN;
     }
-    if (GetAsyncKeyState('D') | GetAsyncKeyState(VK_RIGHT) & 0x8000) {
+    if ((GetAsyncKeyState('D') | GetAsyncKeyState(VK_RIGHT)) & 0x8000) {
         return RIGHT;
     }
     if (GetAsyncKeyState(ESCAPE) & 0x8000) {
@@ -80,7 +77,6 @@ Client::Client() {
     running = true;
     direction = RIGHT;
 
-
     map = loadMap("map.txt");
     gotoxy(1, 20);
     cout << "zaladowalem mape :D \n";
@@ -92,13 +88,13 @@ void Client::mainLoop() {
     draw();
 
     thread input(&Client::handleInputAsync, this);
+    thread fetchThread(&Client::fetchAsync, this);
     unique_lock<mutex> lock(mapChange, defer_lock);
 
     gotoxy(1, 21);
     cout << "startuje petle :3 \n";
 
     while (running) {
-        fetch();
         lock.lock();
         draw();
         lock.unlock();
@@ -108,6 +104,7 @@ void Client::mainLoop() {
     }
 
     input.join();
+    fetchThread.join();
 }
 
 void Client::makeAction(char input, char lastInput) {
@@ -122,10 +119,6 @@ void Client::makeAction(char input, char lastInput) {
     performPreAction(input);
     lock.unlock();
 
-    /*auto sendThreadFunc = [this, input]() {
-        sendToServer(input);
-    };*/
-    //thread send(sendThreadFunc);
     sendToServer(input);
 }
 
@@ -135,7 +128,6 @@ void Client::handleInputAsync() {
     char lastInput = NO_INPUT;
 
     while (running) {
-
         lastInput = input;
         input = getPressedKey();
 
@@ -226,19 +218,14 @@ ActionCode Client::inputToActionCode(char input) {
     switch (input) {
     case UP:
         return ActionCode(MOVE_UP);
-        break;
     case DOWN:
         return ActionCode(MOVE_DOWN);
-        break;
     case RIGHT:
         return ActionCode(MOVE_RIGHT);
-        break;
     case LEFT:
         return ActionCode(MOVE_LEFT);
-        break;
     case ATTACK_MOVE:
         return ActionCode(ATTACK);
-        break;
     }
     return ActionCode(PRESENT);
 }
@@ -249,21 +236,36 @@ void Client::sendToServer(char input) {
     action.actionCode = actionCode;
     action.playerID = id;
     string serializedAction = action.serialize();
+
+    unique_lock<mutex> lock(fetching);
     GameState newGameState = connection.sendToServer(serializedAction);
+    lock.unlock();
 
     update(newGameState);
 }
 
-// TODO
 void Client::fetch() {
-    GameState newGameState = connection.fetch();
-    update(newGameState);
+    try {
+        unique_lock<mutex> lock(fetching);
+        GameState newGameState = connection.fetch();
+        lock.unlock();
+        update(newGameState);
+    }
+    catch (exception& e) {
+        cerr << "Error fetching game state: " << e.what() << endl;
+    }
 }
 
-// TODO
+void Client::fetchAsync() {
+    while (running) {
+        fetch();
+        this_thread::sleep_for(chrono::milliseconds(100));  // Adjust as needed
+    }
+}
+
 void Client::update(GameState& newGameState) {
     unique_lock<mutex> lock(mapChange);
-    for (auto player : gamestate.players) {
+    for (auto& player : gamestate.players) {
         int x = player.position.x;
         int y = player.position.y;
 
@@ -272,7 +274,7 @@ void Client::update(GameState& newGameState) {
         }
     }
 
-    for (auto player : newGameState.players) {
+    for (auto& player : newGameState.players) {
         int x = player.position.x;
         int y = player.position.y;
 
@@ -282,7 +284,7 @@ void Client::update(GameState& newGameState) {
     }
 
     gamestate = newGameState;
-    myPlayer = &gamestate.players[id]; // JUST FOR NOW
+    myPlayer = &gamestate.players[id];
 
     lock.unlock();
 }
@@ -309,7 +311,6 @@ void Client::gotoxy(int x, int y) {
     SetConsoleCursorPosition(hConsole, coord);
 }
 
-// TODO
 void Client::draw() {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     COORD coord = { 0, 0 };
@@ -324,9 +325,7 @@ void Client::draw() {
     for (size_t y = 0; y < rows; y++) {
         for (size_t x = 0; x < graphicCols; x++) {
             int index = y * graphicCols + x;
-            //buffer[index].Char.AsciiChar = map[y][x / (graphicCols / cols)];
             buffer[index].Char.AsciiChar = ' ';
-
             int color = symbolToColor(map[y][x / (graphicCols / cols)]);
             buffer[index].Attributes = color;
         }
