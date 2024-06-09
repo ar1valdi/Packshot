@@ -3,6 +3,7 @@
 #include <WS2tcpip.h>
 #include <iostream>
 #include <algorithm>
+#include <chrono>
 
 using namespace std;
 
@@ -54,6 +55,7 @@ bool Server::startListening(const string& address, int port) {
 void Server::handleClient(SOCKET s) {
     char recvBuf[1024];
     int bytesRecv;
+    auto lastReceivedTime = std::chrono::steady_clock::now();
 
     while (!quit) {
         fd_set readfds;
@@ -77,6 +79,7 @@ void Server::handleClient(SOCKET s) {
             }
 
             cout << "Received " << bytesRecv << " bytes: " << recvBuf << '\n';
+            lastReceivedTime = std::chrono::steady_clock::now();
 
             string sendBuf;
             if (strcmp(recvBuf, FETCH_MSG) == 0) {
@@ -97,6 +100,13 @@ void Server::handleClient(SOCKET s) {
         }
         else if (result == SOCKET_ERROR) {
             cerr << "select failed: " << WSAGetLastError() << endl;
+            break;
+        }
+
+        auto currentTime = std::chrono::steady_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastReceivedTime).count();
+        if (duration > CLIENT_CUTOFF_TIME) {
+            cout << "Client timed out\n";
             break;
         }
     }

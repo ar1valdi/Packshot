@@ -7,12 +7,15 @@
 #include "Client.h"
 
 void testy_janek() {
+    Connection c;
+    c.connectToServer();
 
 	Sleep(100000);
 }
 
 int main()
 {
+    testy_janek();
     Client client;
     client.start();
     int x;
