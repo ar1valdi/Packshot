@@ -19,6 +19,7 @@ public:
     void stop();
 
 private:
+    std::atomic<bool> isInQueue;
     std::string address;
     int port;
     SOCKET serverSocket;

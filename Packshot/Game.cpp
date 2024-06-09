@@ -35,14 +35,13 @@ GameState Game::handleRequest(Action a) {
 		return m_gameState;
 	}
 
-	cout << a.playerID << "hihi\n";
+	cout << a.playerID;
 	for (auto& player : m_gameState.players) {
 
 		if (player.id != a.playerID) {
 			continue;
 		}
 
-		cout << "wstepuje do wykonania akcji\n";
 		switch (a.actionCode) {
 			case ActionCode::MOVE_UP:
 				player.position.y--;
@@ -51,7 +50,6 @@ GameState Game::handleRequest(Action a) {
 				player.position.y++;
 				break;
 			case ActionCode::MOVE_RIGHT:
-				cout << "w prawo poszedl gracz\n";
 				player.position.x++;
 				break;
 			case ActionCode::MOVE_LEFT:

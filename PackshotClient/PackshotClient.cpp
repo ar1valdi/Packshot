@@ -15,7 +15,6 @@ void testy_janek() {
 
 int main()
 {
-    testy_janek();
     Client client;
     client.start();
     int x;

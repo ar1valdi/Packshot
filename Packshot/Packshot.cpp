@@ -8,5 +8,6 @@ void testy_janek() {
 
 int main()
 {
-	testy_janek();
+	Server s("127.0.0.1", 12345);
+	s.start();
 }
