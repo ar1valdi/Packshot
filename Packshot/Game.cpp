@@ -35,11 +35,14 @@ GameState Game::handleRequest(Action a) {
 		return m_gameState;
 	}
 
+	cout << a.playerID << "hihi\n";
 	for (auto& player : m_gameState.players) {
+
 		if (player.id != a.playerID) {
 			continue;
 		}
 
+		cout << "wstepuje do wykonania akcji\n";
 		switch (a.actionCode) {
 			case ActionCode::MOVE_UP:
 				player.position.y--;
@@ -48,6 +51,7 @@ GameState Game::handleRequest(Action a) {
 				player.position.y++;
 				break;
 			case ActionCode::MOVE_RIGHT:
+				cout << "w prawo poszedl gracz\n";
 				player.position.x++;
 				break;
 			case ActionCode::MOVE_LEFT:
@@ -99,7 +103,7 @@ void Game::handleAttack(Player player)
 
 void Game::update()
 {
-	while (m_running) {
+	/*while (m_running) {
 		for (auto& flag : m_gameState.flags) {
 			if (flag.ownerID == -1) {
 				continue;
@@ -118,5 +122,5 @@ void Game::update()
 
 		m_timer += GAME_UPDATE_RATE;
 		this_thread::sleep_for(chrono::milliseconds(GAME_UPDATE_RATE));
-	}
+	}*/
 }

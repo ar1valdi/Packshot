@@ -12,6 +12,11 @@ using namespace std;
 mutex mapChange;
 
 char Client::getPressedKey() {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (GetForegroundWindow() != GetConsoleWindow()) {
+        return NO_INPUT;
+    }
+
     if (GetAsyncKeyState('W') | GetAsyncKeyState(VK_UP) & 0x8000) {
         return UP;
     }
@@ -34,13 +39,21 @@ char Client::getPressedKey() {
 }
 
 void Client::start() {
-    //connect();
+    connect();
     mainLoop();
 }
 
 void Client::connect() {
     running = connection.connectToServer();
-    gamestate = connection.sendToServer("Hello World - client");
+
+    Action a;
+    a.actionCode = NEW_PLAYER;
+    gamestate = connection.sendToServer(a.serialize());
+    id = gamestate.players.size() - 1;
+    myPlayer = &gamestate.players[id];
+    gotoxy(1, 25);
+    cout << "moje id (:) " << id << '\n';
+
     Sleep(100);
 }
 
@@ -67,22 +80,31 @@ Client::Client() {
     running = true;
     direction = RIGHT;
 
-    map = loadMap("map.txt");
 
-    myPlayer.setPosition({1, 1});
-    map[myPlayer.getPosition().x][myPlayer.getPosition().y] = '@';
+    map = loadMap("map.txt");
+    gotoxy(1, 20);
+    cout << "zaladowalem mape :D \n";
 }
 
 void Client::mainLoop() {
+    cout << "fetching\n";
+    fetch();
+    draw();
+
     thread input(&Client::handleInputAsync, this);
     unique_lock<mutex> lock(mapChange, defer_lock);
+
+    gotoxy(1, 21);
+    cout << "startuje petle :3 \n";
 
     while (running) {
         fetch();
         lock.lock();
         draw();
         lock.unlock();
-        Sleep(5);
+        gotoxy(1, 22);
+        cout << "zdrawowane :P\n";
+        Sleep(50);
     }
 
     input.join();
@@ -100,10 +122,11 @@ void Client::makeAction(char input, char lastInput) {
     performPreAction(input);
     lock.unlock();
 
-    auto sendThreadFunc = [this, input]() {
+    /*auto sendThreadFunc = [this, input]() {
         sendToServer(input);
-    };
+    };*/
     //thread send(sendThreadFunc);
+    sendToServer(input);
 }
 
 // TODO 
@@ -123,6 +146,8 @@ void Client::handleInputAsync() {
         case NO_INPUT:
             break;
         default:
+            gotoxy(1, 23);
+            cout << "kliknalem B)\n";
             makeAction(input, lastInput);
             break;
         }
@@ -130,8 +155,8 @@ void Client::handleInputAsync() {
 }
 
 bool Client::validateInput(char input) {
-    int x = myPlayer.getPosition().x;
-    int y = myPlayer.getPosition().y;
+    int x = myPlayer->position.x;
+    int y = myPlayer->position.y;
 
     switch (input) {
     case UP:
@@ -158,10 +183,14 @@ bool Client::validateInput(char input) {
     return true;
 }
 
+void Client::attack() {
+
+}
+
 // TODO
 void Client::performPreAction(char input) {
-    int x = myPlayer.getPosition().x;
-    int y = myPlayer.getPosition().y;
+    int x = myPlayer->position.x;
+    int y = myPlayer->position.y;
     int dx = 0;
     int dy = 0;
     map[y][x] = ' ';
@@ -183,11 +212,14 @@ void Client::performPreAction(char input) {
         direction = LEFT;
     }
     if (input == ATTACK_MOVE) {
-
+        attack();
     }
 
+    gotoxy(0, 15);
+    cout << "moved to " << x + dx << ", " << y + dy << '\n';
+
     map[y + dy][x + dx] = '@';
-    myPlayer.setPosition({ x + dx, y + dy });
+    myPlayer->position = { x + dx, y + dy };
 }
 
 ActionCode Client::inputToActionCode(char input) {
@@ -206,6 +238,7 @@ ActionCode Client::inputToActionCode(char input) {
         break;
     case ATTACK_MOVE:
         return ActionCode(ATTACK);
+        break;
     }
     return ActionCode(PRESENT);
 }
@@ -214,33 +247,44 @@ void Client::sendToServer(char input) {
     ActionCode actionCode = inputToActionCode(input);
     Action action;
     action.actionCode = actionCode;
+    action.playerID = id;
     string serializedAction = action.serialize();
     GameState newGameState = connection.sendToServer(serializedAction);
 
-    unique_lock<mutex> lock(mapChange);
     update(newGameState);
-    lock.unlock();
 }
 
 // TODO
 void Client::fetch() {
+    GameState newGameState = connection.fetch();
+    update(newGameState);
 }
 
 // TODO
 void Client::update(GameState& newGameState) {
+    unique_lock<mutex> lock(mapChange);
     for (auto player : gamestate.players) {
-        int x = player.getPosition().x;
-        int y = player.getPosition().y;
+        int x = player.position.x;
+        int y = player.position.y;
 
-        map[y][x] = ' ';
+        if (player.isAlive) {
+            map[y][x] = ' ';
+        }
     }
 
     for (auto player : newGameState.players) {
-        int x = player.getPosition().x;
-        int y = player.getPosition().y;
+        int x = player.position.x;
+        int y = player.position.y;
 
-        map[y][x] = '@';
+        if (player.isAlive) {
+            map[y][x] = '@';
+        }
     }
+
+    gamestate = newGameState;
+    myPlayer = &gamestate.players[id]; // JUST FOR NOW
+
+    lock.unlock();
 }
 
 void Client::clearScreen() {
@@ -257,6 +301,12 @@ int Client::symbolToColor(char symbol) {
         return BACKGROUND_RED;
     }
     return 6;
+}
+
+void Client::gotoxy(int x, int y) {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD coord = { x, y };
+    SetConsoleCursorPosition(hConsole, coord);
 }
 
 // TODO

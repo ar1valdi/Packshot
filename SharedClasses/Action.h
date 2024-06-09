@@ -21,15 +21,17 @@ public:
 	ActionCode actionCode;
     inline string serialize() {
         stringstream ss;
-        ss << actionCode;
+        ss << actionCode << " " << playerID;
         return ss.str();
     }
     inline static Action deserialize(const string& ser) {
         Action action;
         stringstream ss(ser);
         int code;
-        ss >> code;
+        int id;
+        ss >> code >> id;
         action.actionCode = static_cast<ActionCode>(code);
+        action.playerID = id;
         return action;
     }
 };
