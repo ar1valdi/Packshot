@@ -93,7 +93,8 @@ GameState Connection::sendToServer(const string& req) {
 }
 
 GameState Connection::fetch() {
-	return sendToServer(FETCH_MSG);
+	GameState newGameState = sendToServer(FETCH_MSG);
+	return newGameState;
 }
 
 Connection::~Connection() {
