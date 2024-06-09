@@ -7,6 +7,8 @@
 #include "Client.h"
 
 void testy_janek() {
+    Connection c;
+    c.connectToServer();
 
 	Sleep(100000);
 }

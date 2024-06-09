@@ -240,8 +240,21 @@ void Client::sendToServer(char input) {
     action.playerID = id;
     string serializedAction = action.serialize();
 
+    GameState newGameState;
     unique_lock<mutex> lock(fetching);
-    GameState newGameState = connection.sendToServer(serializedAction);
+    try {
+        newGameState = connection.sendToServer(serializedAction);
+    }
+    catch (exception& e) {
+        if (strcmp(e.what(), "recv failed: 0") == 0) {
+            cerr << "Lost connection to the server" << endl;
+        }
+        else {
+            cerr << "Error fetching game state: " << e.what() << endl;
+        }
+        running = false;
+        newGameState = gamestate;
+    }
     lock.unlock();
 
     update(newGameState);
@@ -255,7 +268,13 @@ void Client::fetch() {
         update(newGameState);
     }
     catch (exception& e) {
-        cerr << "Error fetching game state: " << e.what() << endl;
+        if (strcmp(e.what(), "recv failed: 0") == 0) {
+            cerr << "Lost connection to the server" << endl;
+        }
+        else {
+            cerr << "Error fetching game state: " << e.what() << endl;
+        }
+        running = false;
     }
 }
 
