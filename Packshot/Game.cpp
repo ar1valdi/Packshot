@@ -115,10 +115,14 @@ void Game::handleAttack(Player& player)
 {
 	player.isAttacking = true;
 	for (auto& other : m_gameState.players) {
-		if (other.position.x - 1 == player.position.x ||
-			other.position.x + 1 == player.position.x ||
-			other.position.y - 1 == player.position.y ||
-			other.position.y + 1 == player.position.y)
+		if (!other.isAlive) {
+			continue;
+		}
+
+		if ((other.position.x - 1 == player.position.x && other.position.y == player.position.y) ||
+			(other.position.x + 1 == player.position.x && other.position.y == player.position.y) ||
+			(other.position.y - 1 == player.position.y && other.position.x == player.position.x) ||
+			(other.position.y + 1 == player.position.y && other.position.x == player.position.x))
 		{
 			other.isAlive = false;
 			other.deathTimer = DEATH_COOLDOWN;

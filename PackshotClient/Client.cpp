@@ -40,6 +40,7 @@ void Client::start() {
         cerr << "Can't connect to the server\n";
         return;
     }
+
     mainLoop();
 }
 
@@ -52,7 +53,21 @@ bool Client::connect() {
     Connection c;
     c.connectToServer();
 
+    cout << "Welcome to Packshot!\n";
+    cout << "Enter \"ready\" to tell that you're ready\n";
+    std::string command = "";
+    while (command != "ready") {
+        cin >> command;
+        cout << "Waiting for other players...";
+    }
     Action a;
+    a.actionCode = ActionCode::READY_IN_LOBBY;
+    auto ret = connection.sendToServerQueue(a.serialize());
+    while (!ret.second) {
+        ret = connection.fetchQueue();
+        Sleep(50);
+    }
+    clearScreen();
     a.actionCode = NEW_PLAYER;
     gamestate = connection.sendToServer(a.serialize());
     id = gamestate.players.size() - 1;
@@ -365,6 +380,21 @@ void Client::draw() {
         buffer[index].Attributes = 48;
         buffer[index + 1].Char.AsciiChar = ' ';
         buffer[index + 1].Attributes = 48;
+    }
+
+    for (auto& player : gamestate.players) {
+        if (!player.isAlive) {
+            continue;
+        }
+
+        int x = player.position.x;
+        int y = player.position.y;
+        int index = y * graphicCols + x * 2;
+
+        buffer[index].Char.AsciiChar = ' ';
+        buffer[index].Attributes = BACKGROUND_RED;
+        buffer[index + 1].Char.AsciiChar = ' ';
+        buffer[index + 1].Attributes = BACKGROUND_RED;
     }
 
     if (myPlayer->isAlive) {
