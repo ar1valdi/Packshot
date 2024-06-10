@@ -58,6 +58,83 @@ bool Connection::connectToServer(const string& address, int port) {
 	return true;
 }
 
+/// <summary>
+/// 
+/// </summary>
+/// <param name="req"></param>
+/// <returns>serialized queue state, if game has started</returns>
+pair<string, bool> Connection::sendToServerQueue(const string& req) {
+	int bytesSent = send(s, req.c_str(), req.length() + 1, 0);
+	if (bytesSent <= 0) {
+		closesocket(s);
+		WSACleanup();
+		throw runtime_error("send failed: " + to_string(WSAGetLastError()));
+	}
+
+	//Sleep(1000000);
+
+	//cout << "Bytes sent: " << bytesSent << '\n';
+
+	fd_set readfds;
+	FD_ZERO(&readfds);
+	FD_SET(s, &readfds);
+
+	timeval timeout;
+	timeout.tv_sec = 5;  // Set timeout for select
+	timeout.tv_usec = 0;
+
+	int bytesRecv = SOCKET_ERROR;
+	char recvBuf[CLIENT_RECV_BUF] = { 0 };
+
+	if (select(0, &readfds, NULL, NULL, &timeout) > 0) {
+		bytesRecv = recv(s, recvBuf, CLIENT_RECV_BUF, 0);
+		if (bytesRecv == 0) {
+			closesocket(s);
+			WSACleanup();
+			throw runtime_error("connection closed");
+		}
+		else if (bytesRecv < 0) {
+			closesocket(s);
+			WSACleanup();
+			throw runtime_error("recv failed: " + to_string(WSAGetLastError()));
+		}
+		cout << "Received " << bytesRecv << " bytes: " << recvBuf << '\n';
+	}
+	else {
+		closesocket(s);
+		WSACleanup();
+		throw runtime_error("recv timeout");
+	}
+	string serializedQueue = recvBuf;
+
+	if (select(0, &readfds, NULL, NULL, &timeout) > 0) {
+		bytesRecv = recv(s, recvBuf, CLIENT_RECV_BUF, 0);
+		if (bytesRecv == 0) {
+			closesocket(s);
+			WSACleanup();
+			throw runtime_error("connection closed");
+		}
+		else if (bytesRecv < 0) {
+			closesocket(s);
+			WSACleanup();
+			throw runtime_error("recv failed: " + to_string(WSAGetLastError()));
+		}
+		cout << "Received " << bytesRecv << " bytes: " << recvBuf << '\n';
+	}
+	else {
+		closesocket(s);
+		WSACleanup();
+		throw runtime_error("recv timeout");
+	}
+	bool started = strcmp(recvBuf, START_GAME) == 0;
+
+	return { serializedQueue, started };
+}
+
+pair<string, bool> Connection::fetchQueue() {
+	return sendToServerQueue(FETCH_QUEUE);
+}
+
 GameState Connection::sendToServer(const string& req) {
 	int bytesSent = send(s, req.c_str(), req.length() + 1, 0);
 	if (bytesSent <= 0) {

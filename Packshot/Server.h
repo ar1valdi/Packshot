@@ -34,6 +34,7 @@ private:
 
     bool startListening(const std::string& address, int port);
     void handleClient(SOCKET s);
+    void handleClientInQueue(char  recvBuf[1024], std::string& sendBuf, SOCKET& s, int& retflag, int qID);
     void sendWithLog(const SOCKET& s, std::string& sendBuf, int& retflag);
     void handleClientInGame(char  recvBuf[1024], string& sendBuf);
     void runListenThread();

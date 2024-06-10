@@ -54,6 +54,7 @@ bool Server::startListening(const string& address, int port) {
 }
 
 void Server::handleClient(SOCKET s) {
+    int queueID = qm.getNextID();
     char recvBuf[1024];
     int bytesRecv;
     auto lastReceivedTime = std::chrono::steady_clock::now();
@@ -85,19 +86,9 @@ void Server::handleClient(SOCKET s) {
 
             string sendBuf;
             if (isInQueue.load()) {
-                qm.processAction(Action::deserialize(recvBuf));
-                sendBuf = qm.serializePlayerStates();
-
                 int retflag;
-                sendWithLog(s, sendBuf, retflag);
+                handleClientInQueue(recvBuf, sendBuf, s, retflag, queueID);
                 if (retflag == 2) break;
-
-                if (qm.allPlayersReady()) {
-                    sendBuf = START_GAME;
-                }
-                else {
-                    sendBuf = STILL_QUEUE;
-                }
             }
             else {
                 handleClientInGame(recvBuf, sendBuf);
@@ -119,6 +110,9 @@ void Server::handleClient(SOCKET s) {
             break;
         }
     }
+    if (isInQueue.load()) {
+        qm.erasePlayer(queueID);
+    }
 
     connectedClients.store(connectedClients.load() - 1);
     closesocket(s);
@@ -127,6 +121,35 @@ void Server::handleClient(SOCKET s) {
         clientSockets.erase(remove(clientSockets.begin(), clientSockets.end(), s), clientSockets.end());
     }
     cout << "Closing thread " << this_thread::get_id() << endl;
+}
+
+void Server::handleClientInQueue(char  recvBuf[1024], std::string& sendBuf, SOCKET& s, int& retflag, int qID)
+{
+    retflag = 1;
+    if (strcmp(recvBuf, FETCH_QUEUE) == 0) {
+        sendBuf = qm.serializePlayerStates();
+    }
+    else {
+        Action a = Action::deserialize(recvBuf);
+        a.playerID = qID;
+        qm.processAction(a);
+        sendBuf = qm.serializePlayerStates();
+    }
+
+    int retflagIn;
+    sendWithLog(s, sendBuf, retflagIn);
+    if (retflagIn == 2) { retflag = 2; return; };
+
+    if (qm.allPlayersReady()) {
+        sendBuf = START_GAME;
+        isInQueue.store(false);
+    }
+    else {
+        sendBuf = STILL_QUEUE;
+    }
+
+    sendWithLog(s, sendBuf, retflagIn);
+    if (retflagIn == 2) { retflag = 2; return; };
 }
 
 void Server::sendWithLog(const SOCKET& s, std::string& sendBuf, int& retflag)
@@ -142,7 +165,10 @@ void Server::sendWithLog(const SOCKET& s, std::string& sendBuf, int& retflag)
 
 void Server::handleClientInGame(char recvBuf[1024], string& sendBuf)
 {
-    if (strcmp(recvBuf, FETCH_MSG) == 0) {
+    if (strcmp(recvBuf, FETCH_QUEUE) == 0) {
+        sendBuf = START_GAME;
+    }
+    else if (strcmp(recvBuf, FETCH_MSG) == 0) {
         sendBuf = game->getSerializedGameState();
     }
     else {
