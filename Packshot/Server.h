@@ -36,7 +36,7 @@ private:
     void handleClient(SOCKET s);
     void handleClientInQueue(char  recvBuf[1024], std::string& sendBuf, SOCKET& s, int& retflag, int qID);
     void sendWithLog(const SOCKET& s, std::string& sendBuf, int& retflag);
-    void handleClientInGame(char  recvBuf[1024], string& sendBuf);
+    bool handleClientInGame(char  recvBuf[1024], string& sendBuf, SOCKET& s);
     void runListenThread();
     void cleanUpThreads();
 };
