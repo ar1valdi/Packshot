@@ -13,7 +13,9 @@ public:
 	bool connectToServer();
 	bool connectToServer(const string& address, int port);
 	GameState sendToServer(const string& req);
+	pair<string, bool> sendToServerQueue(const string& req);
 	GameState fetch();
+	pair<string, bool> fetchQueue();
 	~Connection();
 };
 
