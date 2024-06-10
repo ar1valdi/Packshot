@@ -7,6 +7,7 @@
 #include "Player.h"
 #include "Action.h"
 #include <mutex>
+#include "Consts.h"
 
 class QueueManager {
 private:
@@ -24,7 +25,7 @@ public:
 
     bool allPlayersReady() {
         std::unique_lock<std::mutex> lock(mtx);
-        if (playerStates.size() < 2) return false;
+        if (playerStates.size() < MIN_PLAYERS_TO_START_GAME) return false;
         return std::all_of(playerStates.begin(), playerStates.end(), [](const auto& pair) {
             return pair.second;
             });

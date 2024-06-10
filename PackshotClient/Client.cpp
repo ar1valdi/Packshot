@@ -53,18 +53,6 @@ bool Client::connect() {
     c.connectToServer();
 
     Action a;
-    a.playerID = 1;
-    a.actionCode = ActionCode::READY_IN_LOBBY;
-    auto ret = c.sendToServerQueue(a.serialize());
-    cout << ret.first << " " << ret.second;
-
-    while (!ret.second) {
-        auto ret = c.fetchQueue();
-        cout << ret.first << " " << ret.second << '\n';
-        Sleep(1000);
-    }
-
-   // Action a;
     a.actionCode = NEW_PLAYER;
     gamestate = connection.sendToServer(a.serialize());
     id = gamestate.players.size() - 1;

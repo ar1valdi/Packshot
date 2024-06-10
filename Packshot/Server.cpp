@@ -91,7 +91,9 @@ void Server::handleClient(SOCKET s) {
                 if (retflag == 2) break;
             }
             else {
-                handleClientInGame(recvBuf, sendBuf);
+                if (!handleClientInGame(recvBuf, sendBuf, s)) {
+                    break;
+                }
 
                 int retflag;
                 sendWithLog(s, sendBuf, retflag);
@@ -163,12 +165,16 @@ void Server::sendWithLog(const SOCKET& s, std::string& sendBuf, int& retflag)
     cout << "Sent " << bytesSent << " bytes: " << sendBuf << '\n';
 }
 
-void Server::handleClientInGame(char recvBuf[1024], string& sendBuf)
+bool Server::handleClientInGame(char recvBuf[1024], string& sendBuf, SOCKET& s)
 {
     if (strcmp(recvBuf, FETCH_QUEUE) == 0) {
         sendBuf = START_GAME;
-    }
-    else if (strcmp(recvBuf, FETCH_MSG) == 0) {
+        int retflag = 0;
+        string q = qm.serializePlayerStates();
+        sendWithLog(s, q, retflag);
+        if (retflag == 2) { return false; }
+        sendBuf = START_GAME;
+    } else if (strcmp(recvBuf, FETCH_MSG) == 0) {
         sendBuf = game->getSerializedGameState();
     }
     else {
@@ -176,6 +182,7 @@ void Server::handleClientInGame(char recvBuf[1024], string& sendBuf)
         GameState gs = game->handleRequest(a);
         sendBuf = gs.serialize();
     }
+    return true;
 }
 
 void Server::runListenThread() {
