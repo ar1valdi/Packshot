@@ -111,13 +111,18 @@ void Game::handleFlags(Player player)
 	}
 }
 
-void Game::handleAttack(Player player)
+void Game::handleAttack(Player& player)
 {
+	player.isAttacking = true;
 	for (auto& other : m_gameState.players) {
-		if (other.position.x - 1 == player.position.x ||
-			other.position.x + 1 == player.position.x ||
-			other.position.y - 1 == player.position.y ||
-			other.position.y + 1 == player.position.y)
+		if (!other.isAlive) {
+			continue;
+		}
+
+		if ((other.position.x - 1 == player.position.x && other.position.y == player.position.y) ||
+			(other.position.x + 1 == player.position.x && other.position.y == player.position.y) ||
+			(other.position.y - 1 == player.position.y && other.position.x == player.position.x) ||
+			(other.position.y + 1 == player.position.y && other.position.x == player.position.x))
 		{
 			other.isAlive = false;
 			other.deathTimer = DEATH_COOLDOWN;
@@ -143,7 +148,9 @@ void Game::update()
 			}
 
 			for (auto& player : m_gameState.players) {
-				player.score += FLAG_POINT_GAIN;
+				if (player.id == flag.ownerID) {
+					player.score += FLAG_POINT_GAIN;
+				}
 			}
 		}
 
@@ -153,6 +160,12 @@ void Game::update()
 				if (player.deathTimer <= 0) {
 					player.isAlive = true;
 					player.deathTimer = 0;
+				}
+			}
+			
+			for (auto& flag : m_gameState.flags) {
+				if (flag.position == player.position) {
+					flag.ownerID = player.id;
 				}
 			}
 		}

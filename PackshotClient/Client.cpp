@@ -40,6 +40,7 @@ void Client::start() {
         cerr << "Can't connect to the server\n";
         return;
     }
+
     mainLoop();
 }
 
@@ -52,13 +53,25 @@ bool Client::connect() {
     Connection c;
     c.connectToServer();
 
+    cout << "Welcome to Packshot!\n";
+    cout << "Enter \"ready\" to tell that you're ready\n";
+    std::string command = "";
+    while (command != "ready") {
+        cin >> command;
+        cout << "Waiting for other players...";
+    }
     Action a;
+    a.actionCode = ActionCode::READY_IN_LOBBY;
+    auto ret = connection.sendToServerQueue(a.serialize());
+    while (!ret.second) {
+        ret = connection.fetchQueue();
+        Sleep(50);
+    }
+    clearScreen();
     a.actionCode = NEW_PLAYER;
     gamestate = connection.sendToServer(a.serialize());
     id = gamestate.players.size() - 1;
     myPlayer = &gamestate.players[id];
-    gotoxy(1, 25);
-    cout << "moje id (:) " << id << '\n';
 
     Sleep(100);
     return true;
@@ -96,7 +109,6 @@ Client::Client() {
     direction = RIGHT;
 
     map = loadMap("map.txt");
-    gotoxy(1, 20);
 }
 
 void Client::mainLoop() {
@@ -107,13 +119,11 @@ void Client::mainLoop() {
     thread fetchThread(&Client::fetchAsync, this);
     unique_lock<mutex> lock(mapChange, defer_lock);
 
-    gotoxy(1, 21);
 
     while (running) {
         lock.lock();
         draw();
         lock.unlock();
-        gotoxy(1, 22);
         Sleep(50);
     }
 
@@ -154,7 +164,6 @@ void Client::handleInputAsync() {
             if (!myPlayer->isAlive) {
                 break;
             }
-            gotoxy(1, 23);
             makeAction(input, lastInput);
             break;
         }
@@ -191,7 +200,7 @@ bool Client::validateInput(char input) {
 }
 
 void Client::attack() {
-
+    attacking = true;
 }
 
 // TODO
@@ -221,9 +230,6 @@ void Client::performPreAction(char input) {
     if (input == ATTACK_MOVE) {
         attack();
     }
-
-    gotoxy(0, 15);
-    cout << "moved to " << x + dx << ", " << y + dy << '\n';
 
     map[y + dy][x + dx] = '@';
     myPlayer->position = { x + dx, y + dy };
@@ -365,10 +371,66 @@ void Client::draw() {
         }
     }
 
+    for (auto& flag : gamestate.flags) {
+        int x = flag.position.x;
+        int y = flag.position.y;
+        int index = y * graphicCols + x * 2;
+
+        buffer[index].Char.AsciiChar = ' ';
+        buffer[index].Attributes = 48;
+        buffer[index + 1].Char.AsciiChar = ' ';
+        buffer[index + 1].Attributes = 48;
+    }
+
+    for (auto& player : gamestate.players) {
+        if (!player.isAlive) {
+            continue;
+        }
+
+        int x = player.position.x;
+        int y = player.position.y;
+        int index = y * graphicCols + x * 2;
+
+        buffer[index].Char.AsciiChar = ' ';
+        buffer[index].Attributes = BACKGROUND_RED;
+        buffer[index + 1].Char.AsciiChar = ' ';
+        buffer[index + 1].Attributes = BACKGROUND_RED;
+    }
+
+    if (myPlayer->isAlive) {
+        int x = myPlayer->position.x;
+        int y = myPlayer->position.y;
+        int index = y * graphicCols + x * 2;
+
+        buffer[index].Char.AsciiChar = ' ';
+        buffer[index].Attributes = 80;
+        buffer[index + 1].Char.AsciiChar = ' ';
+        buffer[index + 1].Attributes = 80;
+
+        if (attacking) {
+            buffer[index - 1].Char.AsciiChar = '-';
+            buffer[index - 2].Char.AsciiChar = '-';
+            buffer[index + 2].Char.AsciiChar = '-';
+            buffer[index + 3].Char.AsciiChar = '-';
+            buffer[(y - 1) * graphicCols + x * 2].Char.AsciiChar = '|';
+            buffer[(y + 1) * graphicCols + x * 2].Char.AsciiChar = '|';
+            buffer[(y - 1) * graphicCols + x * 2 + 1].Char.AsciiChar = '|';
+            buffer[(y + 1) * graphicCols + x * 2 + 1].Char.AsciiChar = '|';
+            attacking = false;
+        }
+    }
+
     SMALL_RECT rect = { 0, 0, graphicCols - 1, rows - 1 };
     COORD zeroCoord = { 0, 0 };
     COORD bufferSize = { graphicCols, rows };
     WriteConsoleOutputA(hConsole, buffer, bufferSize, zeroCoord, &rect);
+
+    int scoresX = map[0].size() * 2 + 10;
+    for (int i = 0; i < gamestate.players.size(); i++) {
+        gotoxy(scoresX, i);
+        string yourPlayer = i == myPlayer->id ? " (You)" : "";
+        cout << "Player " << i + 1 << yourPlayer << ": " << gamestate.players[i].score;
+    }
 
     delete[] buffer;
 }

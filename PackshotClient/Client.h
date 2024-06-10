@@ -14,6 +14,7 @@ public:
 
 private:
     bool running;
+    bool attacking;
     char direction;
     int id;
     GameState gamestate;
